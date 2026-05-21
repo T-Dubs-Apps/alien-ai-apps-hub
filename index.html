@@ -5298,19 +5298,27 @@
                 if (!app) return;
                 if (app.id === 'alien-ai-assistant') { this.close(); return; }
                 if (app.file) {
-                    // Resolve URL properly (handles spaces in paths)
-                    let resolvedUrl;
-                    try { resolvedUrl = new URL(app.file, document.baseURI).href; }
-                    catch(e) { resolvedUrl = app.file; }
+                    // Build properly percent-encoded URL (handles spaces in folder names)
+                    const encodedPath = app.file.split('/').map(seg => encodeURIComponent(seg)).join('/');
+                    let fullUrl;
+                    try { fullUrl = new URL(encodedPath, document.baseURI).href; }
+                    catch(e) { fullUrl = encodedPath; }
+
                     if (window.location.protocol === 'file:') {
-                        // Chrome blocks file:→file: new tabs; navigate same tab
-                        window.location.href = resolvedUrl;
-                    } else {
-                        // On http/https direct click handler: window.open is never blocked
-                        const w = window.open(resolvedUrl, '_blank', 'noopener');
-                        if (!w) window.location.href = resolvedUrl; // fallback
+                        // Local file: Chrome blocks file→file new tabs, navigate same tab
+                        this.close();
+                        window.location.href = fullUrl;
+                        return;
                     }
+
+                    // HTTP/HTTPS: open new tab
+                    const win = window.open(fullUrl, '_blank');
                     this.close();
+                    // Always show a chat link — works even if popup was blocked
+                    const chatMsg = win
+                        ? `🚀 **${app.name}** opened in a new tab.\n\n🔗 [Direct link](${fullUrl}) — bookmark it for quick access!`
+                        : `🚀 **${app.name}** is ready but your browser blocked the popup.\n\n👉 [Click here to open ${app.name}](${fullUrl})`;
+                    addChat('ai', chatMsg);
                 } else {
                     addChat('ai', `🚀 Launching ${app.name}...\n\nThis app is being deployed. It will open in a new window shortly.`);
                     this.close();
