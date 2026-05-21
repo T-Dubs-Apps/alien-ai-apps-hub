@@ -5298,13 +5298,18 @@
                 if (!app) return;
                 if (app.id === 'alien-ai-assistant') { this.close(); return; }
                 if (app.file) {
-                    const a = document.createElement('a');
-                    a.href = app.file;
-                    a.target = '_blank';
-                    a.rel = 'noopener';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    // Resolve URL properly (handles spaces in paths)
+                    let resolvedUrl;
+                    try { resolvedUrl = new URL(app.file, document.baseURI).href; }
+                    catch(e) { resolvedUrl = app.file; }
+                    if (window.location.protocol === 'file:') {
+                        // Chrome blocks file:→file: new tabs; navigate same tab
+                        window.location.href = resolvedUrl;
+                    } else {
+                        // On http/https direct click handler: window.open is never blocked
+                        const w = window.open(resolvedUrl, '_blank', 'noopener');
+                        if (!w) window.location.href = resolvedUrl; // fallback
+                    }
                     this.close();
                 } else {
                     addChat('ai', `🚀 Launching ${app.name}...\n\nThis app is being deployed. It will open in a new window shortly.`);
