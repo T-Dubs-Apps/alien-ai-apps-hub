@@ -1158,8 +1158,10 @@
         .badge-pro { background: rgba(251,191,36,0.2); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
         .badge-free { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid rgba(34,197,94,0.3); }
         .hub-action-btn {
+            display: inline-flex; align-items: center;
             padding: 0.45rem 1rem; border-radius: 10px; font-size: 0.8rem; font-weight: 700;
             cursor: pointer; border: none; transition: all 0.2s; white-space: nowrap;
+            text-decoration: none;
         }
         .hub-btn-launch { background: linear-gradient(90deg,#00f2ea,#0080ff); color: #000; }
         .hub-btn-launch:hover { box-shadow: 0 4px 18px rgba(0,242,234,0.5); transform: scale(1.04); }
@@ -5269,9 +5271,18 @@
                 const isAdmin = localStorage.getItem('master_admin') === 'TROY_WALKER_2026';
                 const isOwned = isAdmin || app.status === 'owned';
                 const badgeHtml = `<span class="app-badge badge-${app.badge}">${app.badge.toUpperCase()}</span>`;
+                // Build a safe href from app.file (encode spaces in relative paths)
+                const appHref = app.file
+                    ? (/^https?:\/\//i.test(app.file)
+                        ? app.file
+                        : app.file.split('/').map(s => encodeURIComponent(s)).join('/'))
+                    : null;
                 let actionBtn = '';
                 if (app.id === 'app-repair-agent') {
                     actionBtn = `<button class="hub-action-btn hub-btn-repair" onclick="AppRepairAgent.openModal()"><i class="fa-solid fa-wrench mr-1"></i>Open Repair Agent</button>`;
+                } else if (isOwned && appHref) {
+                    // <a> tag — guaranteed to open, never blocked by popup blockers
+                    actionBtn = `<a class="hub-action-btn hub-btn-launch" href="${appHref}" target="_blank" rel="noopener" onclick="AppHub.close()"><i class="fa-solid fa-play mr-1"></i>Launch</a>`;
                 } else if (isOwned) {
                     actionBtn = `<button class="hub-action-btn hub-btn-launch" onclick="AppHub.launchApp('${app.id}')"><i class="fa-solid fa-play mr-1"></i>Launch</button>`;
                 } else {
