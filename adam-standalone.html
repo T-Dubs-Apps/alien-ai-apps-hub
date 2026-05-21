@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ADAM — Autonomous Direct Access Model</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg: #070d1a;
+  --surface: #0b1425;
+  --card: #0f1d36;
+  --card2: #132340;
+  --border: #1e3560;
+  --accent: #f59e0b;
+  --accent2: #ef4444;
+  --blue: #3b82f6;
+  --green: #22c55e;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --warn: #f59e0b;
+  --radius: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+/* ── Header ── */
+.adam-header {
+  background: linear-gradient(135deg, #0f1d36 0%, #1a0a2e 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+  position: sticky; top: 0; z-index: 100;
+}
+.adam-logo { width: 42px; height: 42px; background: linear-gradient(135deg,#f59e0b,#ef4444); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; box-shadow: 0 0 20px rgba(245,158,11,0.4); }
+.adam-title h1 { font-size: 1.4rem; font-weight: 800; background: linear-gradient(90deg,#f59e0b,#ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.adam-title p { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
+.adam-header-right { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
+
+/* ── Model status pills ── */
+.model-pills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.model-pill { padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; gap: 0.3rem; border: 1px solid; transition: all 0.2s; }
+.model-pill.active { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.1); }
+.model-pill.inactive { border-color: var(--muted); color: var(--muted); background: transparent; }
+.model-pill.calling { border-color: var(--accent); color: var(--accent); background: rgba(245,158,11,0.1); animation: pulse 0.8s infinite; }
+.model-pill.done { border-color: var(--blue); color: var(--blue); background: rgba(59,130,246,0.1); }
+.model-pill.error { border-color: var(--accent2); color: var(--accent2); background: rgba(239,68,68,0.1); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* ── Layout ── */
+.adam-main { display: grid; grid-template-columns: 1fr 340px; gap: 1rem; padding: 1rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+@media (max-width: 900px) { .adam-main { grid-template-columns: 1fr; } }
+
+/* ── Cards ── */
+.adam-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; }
+.adam-card h3 { font-size: 0.85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+
+/* ── Chat History ── */
+.chat-history { height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding: 0.5rem 0; margin-bottom: 1rem; scroll-behavior: smooth; }
+.chat-history::-webkit-scrollbar { width: 4px; }
+.chat-history::-webkit-scrollbar-track { background: transparent; }
+.chat-history::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.chat-msg { border-radius: 10px; padding: 0.7rem 0.9rem; max-width: 90%; font-size: 0.88rem; line-height: 1.5; }
+.chat-msg.user { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); align-self: flex-end; color: #bfdbfe; }
+.chat-msg.adam { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); align-self: flex-start; color: var(--text); }
+.chat-msg.adam .msg-label { font-size: 0.65rem; font-weight: 800; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.3rem; }
+.chat-msg.system { background: rgba(100,116,139,0.1); border: 1px solid rgba(100,116,139,0.2); align-self: center; color: var(--muted); font-size: 0.78rem; max-width: 100%; text-align: center; }
+
+/* ── Input Bar ── */
+.input-bar { display: flex; gap: 0.5rem; align-items: center; }
+.input-bar input {
+  flex: 1; background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); padding: 0.7rem 1rem; font-size: 0.9rem; outline: none; transition: border 0.2s;
+}
+.input-bar input:focus { border-color: var(--accent); }
+.input-bar input::placeholder { color: var(--muted); }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--card2); color: var(--muted); cursor: pointer; display: flex;
+  align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.2s; flex-shrink: 0;
+}
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+.send-btn { background: linear-gradient(135deg,#f59e0b,#ef4444); border: none; color: #000; font-weight: 700; }
+.send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(245,158,11,0.4); }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── Toggles ── */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(30,53,96,0.5); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-size: 0.82rem; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+.toggle-label .muted { color: var(--muted); font-size: 0.72rem; display: block; margin-top: 1px; }
+.toggle { position: relative; display: inline-block; width: 42px; height: 22px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 22px; transition: 0.2s; }
+.toggle-slider::before { content:''; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+input:checked + .toggle-slider { background: var(--accent); }
+input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+/* ── Token bar ── */
+.token-bar { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; }
+.token-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.token-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.2s, background 0.2s; }
+.token-label { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+/* ── Individual responses ── */
+.responses-container { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+.response-item { border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+.response-header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.8rem; background: var(--card2); cursor: pointer; font-size: 0.8rem; }
+.response-header .model-name { font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+.response-body { padding: 0.8rem; font-size: 0.83rem; line-height: 1.6; color: #cbd5e1; white-space: pre-wrap; word-wrap: break-word; display: none; }
+.response-body.open { display: block; }
+.response-header .chevron { transition: transform 0.2s; }
+.response-header.open .chevron { transform: rotate(180deg); }
+
+/* ── Ultra response ── */
+.ultra-box { background: linear-gradient(135deg, rgba(245,158,11,0.05), rgba(239,68,68,0.05)); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+.ultra-box .ultra-label { font-size: 0.7rem; font-weight: 800; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+.ultra-box .ultra-text { font-size: 0.9rem; line-height: 1.7; color: var(--text); white-space: pre-wrap; word-wrap: break-word; }
+.ultra-box .ultra-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.ultra-btn { padding: 0.3rem 0.7rem; border-radius: 8px; border: 1px solid var(--border); background: var(--card2); color: var(--muted); font-size: 0.75rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.3rem; }
+.ultra-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Settings panel ── */
+.key-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+.key-row { display: flex; flex-direction: column; gap: 0.25rem; }
+.key-row label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; }
+.key-row input { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 0.45rem 0.7rem; font-size: 0.8rem; width: 100%; outline: none; transition: border 0.2s; }
+.key-row input:focus { border-color: var(--accent); }
+.key-save-btn { width: 100%; padding: 0.55rem; margin-top: 0.5rem; border-radius: 10px; border: none; background: linear-gradient(90deg,#f59e0b,#ef4444); color: #000; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+.key-save-btn:hover { transform: scale(1.02); box-shadow: 0 4px 14px rgba(245,158,11,0.4); }
+.key-status { font-size: 0.75rem; text-align: center; padding: 0.3rem; border-radius: 6px; display: none; }
+.key-status.ok { background: rgba(34,197,94,0.1); color: var(--green); display: block; }
+
+/* ── Memory panel ── */
+.memory-list { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.3rem; }
+.memory-entry { font-size: 0.75rem; color: var(--muted); padding: 0.3rem 0.5rem; background: var(--card2); border-radius: 6px; display: flex; align-items: center; gap: 0.4rem; }
+.memory-entry span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Thinking indicator ── */
+.thinking { display: none; align-items: center; gap: 0.6rem; padding: 0.6rem 0.9rem; background: rgba(245,158,11,0.05); border-radius: 10px; font-size: 0.82rem; color: var(--accent); border: 1px solid rgba(245,158,11,0.15); }
+.thinking.active { display: flex; }
+.dot-bounce { display: flex; gap: 4px; }
+.dot-bounce span { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: bounce 1s infinite; }
+.dot-bounce span:nth-child(2) { animation-delay: 0.15s; }
+.dot-bounce span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Misc ── */
+.text-green { color: var(--green); }
+.text-red { color: var(--accent2); }
+.collapsible-header { cursor: pointer; user-select: none; display: flex; align-items: center; justify-content: space-between; }
+.collapsible-header .chevron { transition: transform 0.2s; font-size: 0.7rem; }
+.collapsible-header.open .chevron { transform: rotate(180deg); }
+.collapsible-body { display: none; padding-top: 0.8rem; }
+.collapsible-body.open { display: block; }
+
+.tip { font-size: 0.73rem; color: var(--muted); margin-top: 0.5rem; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<div class="adam-header">
+  <div class="adam-logo">🤖</div>
+  <div class="adam-title">
+    <h1>ADAM</h1>
+    <p>Autonomous Direct Access Model · by Troy J. Walker</p>
+  </div>
+  <div class="adam-header-right">
+    <div class="model-pills" id="modelPills"></div>
+    <button class="icon-btn" id="settingsToggleBtn" title="API Keys & Settings" onclick="togglePanel('settingsPanel')">
+      <i class="fa-solid fa-key"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════ MAIN GRID ══════════════════ -->
+<div class="adam-main">
+
+  <!-- ── LEFT: Chat ── -->
+  <div>
+
+    <!-- Model status bar -->
+    <div class="adam-card" style="padding: 0.75rem 1.2rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+        <span style="font-size:0.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.07em;">Active Models</span>
+        <div id="statusPills" class="model-pills"></div>
+      </div>
+    </div>
+
+    <!-- Chat history -->
+    <div class="adam-card" style="padding: 1rem;">
+      <div class="chat-history" id="chatHistory">
+        <div class="chat-msg system">ADAM is ready. Configure at least one API key to start sending messages.</div>
+      </div>
+
+      <!-- Thinking indicator -->
+      <div class="thinking" id="thinkingIndicator">
+        <div class="dot-bounce"><span></span><span></span><span></span></div>
+        <span id="thinkingText">Querying all LLMs in parallel…</span>
+      </div>
+
+      <!-- Token bar -->
+      <div class="token-bar">
+        <div class="token-track"><div class="token-fill" id="tokenFill" style="width:0%"></div></div>
+        <span class="token-label" id="tokenLabel">0 / 5k tokens</span>
+      </div>
+
+      <!-- Input bar -->
+      <div class="input-bar" style="margin-top:0.6rem;">
+        <button class="icon-btn" id="micBtn" title="Voice input (Chrome/Edge)" onclick="toggleMic()">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <input type="text" id="chatInput" placeholder="Type or speak your message…" autocomplete="off"
+          onkeydown="if(event.key==='Enter')sendMessage()"
+          oninput="updateTokenBar()" />
+        <button class="icon-btn send-btn" id="sendBtn" onclick="sendMessage()" title="Send to all LLMs">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+        <button class="icon-btn" id="ttsBtn" title="Text-to-speech toggle" onclick="toggleTTS()">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+      </div>
+
+      <!-- Toggles -->
+      <div style="margin-top:0.8rem;">
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <i class="fa-solid fa-compress" style="color:var(--blue)"></i>
+            Request Optimizer
+            <span class="muted">Compress & deduplicate input</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="optimizerToggle" checked onchange="saveToggle('optimizer',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <i class="fa-solid fa-robot" style="color:var(--accent)"></i>
+            Auto-Synthesize
+            <span class="muted">Merge all responses into one</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="synthesizeToggle" checked onchange="saveToggle('synthesize',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-label">
+            <i class="fa-solid fa-brain" style="color:var(--green)"></i>
+            Memory
+            <span class="muted">Remember conversation context</span>
+          </div>
+          <label class="toggle"><input type="checkbox" id="memoryToggle" checked onchange="saveToggle('memory',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Individual responses (populated dynamically) -->
+    <div id="responsesContainer" class="responses-container" style="display:none;"></div>
+
+    <!-- Ultra Smart Response (populated dynamically) -->
+    <div id="ultraBox" class="ultra-box" style="display:none;">
+      <div class="ultra-label"><i class="fa-solid fa-star"></i> Ultra Smart Response</div>
+      <div class="ultra-text" id="ultraText"></div>
+      <div class="ultra-actions">
+        <button class="ultra-btn" onclick="copyUltra()"><i class="fa-solid fa-copy"></i> Copy</button>
+        <button class="ultra-btn" onclick="speakUltra()"><i class="fa-solid fa-volume-high"></i> Speak</button>
+        <button class="ultra-btn" onclick="clearChat()"><i class="fa-solid fa-trash"></i> Clear</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── RIGHT: Panels ── -->
+  <div>
+
+    <!-- API Keys -->
+    <div class="adam-card" id="settingsPanel">
+      <h3 class="collapsible-header open" id="settingsHeader" onclick="toggleCollapsible('settingsBody','settingsHeader')">
+        <span><i class="fa-solid fa-key"></i> API Keys</span>
+        <i class="fa-solid fa-chevron-down chevron"></i>
+      </h3>
+      <div class="collapsible-body open" id="settingsBody">
+        <div class="key-grid">
+          <div class="key-row"><label>OpenAI (GPT-4o)</label><input type="password" id="key_openai" placeholder="sk-…" /></div>
+          <div class="key-row"><label>Anthropic (Claude)</label><input type="password" id="key_claude" placeholder="sk-ant-…" /></div>
+          <div class="key-row"><label>Google Gemini</label><input type="password" id="key_gemini" placeholder="AIza…" /></div>
+          <div class="key-row"><label>Groq (free tier available)</label><input type="password" id="key_groq" placeholder="gsk_…" /></div>
+          <div class="key-row"><label>xAI Grok</label><input type="password" id="key_grok" placeholder="xai-…" /></div>
+          <div class="key-row"><label>Mistral</label><input type="password" id="key_mistral" placeholder="…" /></div>
+        </div>
+        <button class="key-save-btn" onclick="saveKeys()"><i class="fa-solid fa-floppy-disk"></i> Save Keys</button>
+        <div class="key-status" id="keySavedMsg">✓ Keys saved to this browser</div>
+        <p class="tip">🔒 Keys are stored only in <em>your browser's localStorage</em>. Never shared or sent to any server.</p>
+      </div>
+    </div>
+
+    <!-- Memory -->
+    <div class="adam-card">
+      <h3 class="collapsible-header open" id="memoryHeader" onclick="toggleCollapsible('memoryBody','memoryHeader')">
+        <span><i class="fa-solid fa-brain"></i> Memory</span>
+        <i class="fa-solid fa-chevron-down chevron"></i>
+      </h3>
+      <div class="collapsible-body open" id="memoryBody">
+        <div class="memory-list" id="memoryList">
+          <div style="font-size:0.75rem;color:var(--muted);text-align:center;padding:0.5rem;">No history yet</div>
+        </div>
+        <button class="ultra-btn" style="margin-top:0.6rem;width:100%;justify-content:center;" onclick="clearMemory()">
+          <i class="fa-solid fa-trash"></i> Clear Memory
+        </button>
+      </div>
+    </div>
+
+    <!-- Voice settings -->
+    <div class="adam-card">
+      <h3><i class="fa-solid fa-microphone"></i> Voice</h3>
+      <div class="toggle-row">
+        <div class="toggle-label" style="flex-direction:column;align-items:flex-start;">
+          Microphone
+          <span class="muted">Chrome / Edge required</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="micEnabledToggle" onchange="toggleMicAccess(this.checked)"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="tip" style="margin-top:0.5rem;" id="speechStatus">Web Speech API: checking…</div>
+    </div>
+
+    <!-- About -->
+    <div class="adam-card">
+      <h3><i class="fa-solid fa-circle-info"></i> About ADAM</h3>
+      <div style="font-size:0.78rem;color:var(--muted);line-height:1.6;">
+        <p>ADAM sends every question to <strong style="color:var(--text)">all configured LLMs simultaneously</strong>, then synthesizes their answers into one Ultra Smart Response.</p>
+        <br>
+        <p>Built &amp; owned by <strong style="color:var(--accent)">Troy J. Walker</strong></p>
+        <p style="font-size:0.7rem;margin-top:0.3rem;color:#334155;">Build: 2026-05-14</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  ADAM STANDALONE — Browser-native Ultra LLM Router
+//  Invented & built by Troy J. Walker
+// ══════════════════════════════════════════════════════════════════
+
+const TOKEN_LIMIT = 5000;
+let ttsEnabled = false;
+let micEnabled = false;
+let recognizing = false;
+let recognition = null;
+let adamMemory = [];
+let isBusy = false;
+
+// ── Load saved state ──────────────────────────────────────────────
+function loadState() {
+  const opt = localStorage.getItem('adam_optimizer');
+  const syn = localStorage.getItem('adam_synthesize');
+  const mem = localStorage.getItem('adam_memory_on');
+  if (opt !== null) document.getElementById('optimizerToggle').checked = opt === '1';
+  if (syn !== null) document.getElementById('synthesizeToggle').checked = syn === '1';
+  if (mem !== null) document.getElementById('memoryToggle').checked = mem === '1';
+  adamMemory = JSON.parse(localStorage.getItem('adam_history') || '[]');
+  renderMemory();
+}
+
+function saveToggle(name, val) {
+  localStorage.setItem('adam_' + name, val ? '1' : '0');
+}
+
+// ── Keys ──────────────────────────────────────────────────────────
+const KEY_MAP = {
+  openai:  ['openai_api_key1', 'adam_key_openai'],
+  claude:  ['claude_api_key',  'adam_key_claude'],
+  gemini:  ['gemini_api_key',  'adam_key_gemini'],
+  groq:    ['adam_key_groq'],
+  grok:    ['adam_key_grok'],
+  mistral: ['adam_key_mistral'],
+};
+
+function getKey(provider) {
+  for (const k of KEY_MAP[provider]) {
+    const v = localStorage.getItem(k);
+    if (v && v.trim()) return v.trim();
+  }
+  return null;
+}
+
+function loadKeyFields() {
+  const map = { openai:'key_openai', claude:'key_claude', gemini:'key_gemini', groq:'key_groq', grok:'key_grok', mistral:'key_mistral' };
+  for (const [p, id] of Object.entries(map)) {
+    const k = getKey(p);
+    if (k) document.getElementById(id).value = k;
+  }
+}
+
+function saveKeys() {
+  const map = { openai:'key_openai', claude:'key_claude', gemini:'key_gemini', groq:'key_groq', grok:'key_grok', mistral:'key_mistral' };
+  for (const [p, id] of Object.entries(map)) {
+    const val = document.getElementById(id).value.trim();
+    if (val) localStorage.setItem(KEY_MAP[p][KEY_MAP[p].length - 1], val);
+    // Also update primary spaceship keys for openai/claude/gemini
+    if (p === 'openai' && val) localStorage.setItem('openai_api_key1', val);
+    if (p === 'claude' && val) localStorage.setItem('claude_api_key', val);
+    if (p === 'gemini' && val) localStorage.setItem('gemini_api_key', val);
+  }
+  const msg = document.getElementById('keySavedMsg');
+  msg.classList.add('ok');
+  setTimeout(() => msg.classList.remove('ok'), 2500);
+  renderStatusPills();
+}
+
+// ── Model status pills ────────────────────────────────────────────
+const MODELS = [
+  { id: 'openai',  label: 'GPT-4o',   icon: '⚡' },
+  { id: 'claude',  label: 'Claude',   icon: '🔮' },
+  { id: 'gemini',  label: 'Gemini',   icon: '🌐' },
+  { id: 'groq',    label: 'Groq',     icon: '🚀' },
+  { id: 'grok',    label: 'Grok',     icon: '🤖' },
+  { id: 'mistral', label: 'Mistral',  icon: '🌊' },
+];
+
+function renderStatusPills(states) {
+  const container = document.getElementById('statusPills');
+  container.innerHTML = MODELS.map(m => {
+    const hasKey = !!getKey(m.id);
+    const state = states?.[m.id] || (hasKey ? 'active' : 'inactive');
+    return `<div class="model-pill ${state}" id="pill_${m.id}">${m.icon} ${m.label}</div>`;
+  }).join('');
+}
+
+function setPillState(provider, state) {
+  const el = document.getElementById('pill_' + provider);
+  if (el) el.className = `model-pill ${state}`;
+}
+
+// ── Request Optimizer ─────────────────────────────────────────────
+function optimizeRequest(text) {
+  if (!document.getElementById('optimizerToggle').checked) return text;
+  let t = text.replace(/\s+/g, ' ').trim();
+  // Deduplicate sentences
+  const sentences = t.split(/(?<=[.!?])\s+/);
+  const seen = new Set(), result = [];
+  for (const s of sentences) {
+    if (s.trim() && !seen.has(s.trim())) { result.push(s.trim()); seen.add(s.trim()); }
+  }
+  t = result.join(' ');
+  if (t.length > 1200) t = t.slice(0, 1197) + '…';
+  return t;
+}
+
+// ── Token bar ─────────────────────────────────────────────────────
+function updateTokenBar() {
+  const text = document.getElementById('chatInput').value;
+  const tokens = Math.ceil(text.length / 4);
+  const pct = Math.min(100, (tokens / TOKEN_LIMIT) * 100);
+  const fill = document.getElementById('tokenFill');
+  fill.style.width = pct + '%';
+  fill.style.background = pct > 80 ? '#ef4444' : pct > 50 ? '#f59e0b' : '#22c55e';
+  document.getElementById('tokenLabel').textContent = `${tokens >= 1000 ? (tokens/1000).toFixed(1)+'k' : tokens} / 5k tokens`;
+}
+
+// ── Chat messages ─────────────────────────────────────────────────
+function appendMsg(role, html, label) {
+  const history = document.getElementById('chatHistory');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  if (role === 'adam' && label) div.innerHTML = `<div class="msg-label">${label}</div>${html}`;
+  else div.innerHTML = html;
+  history.appendChild(div);
+  history.scrollTop = history.scrollHeight;
+  return div;
+}
+
+// ── LLM Callers ───────────────────────────────────────────────────
+async function callOpenAI(prompt) {
+  const key = getKey('openai');
+  if (!key) return null;
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }], max_tokens: 1024 })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `OpenAI ${resp.status}`); }
+  const data = await resp.json();
+  return { text: data.choices[0].message.content.trim(), name: 'GPT-4o' };
+}
+
+async function callClaude(prompt) {
+  const key = getKey('claude');
+  if (!key) return null;
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 1024, messages: [{ role: 'user', content: prompt }] })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `Claude ${resp.status}`); }
+  const data = await resp.json();
+  return { text: data.content[0].text.trim(), name: 'Claude' };
+}
+
+async function callGemini(prompt) {
+  const key = getKey('gemini');
+  if (!key) return null;
+  const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${key}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `Gemini ${resp.status}`); }
+  const data = await resp.json();
+  return { text: data.candidates[0].content.parts[0].text.trim(), name: 'Gemini 1.5 Pro' };
+}
+
+async function callGroq(prompt) {
+  const key = getKey('groq');
+  if (!key) return null;
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: 'llama3-70b-8192', messages: [{ role: 'user', content: prompt }], max_tokens: 1024 })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `Groq ${resp.status}`); }
+  const data = await resp.json();
+  return { text: data.choices[0].message.content.trim(), name: 'Groq (Llama 3 70B)' };
+}
+
+async function callGrok(prompt) {
+  const key = getKey('grok');
+  if (!key) return null;
+  const resp = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: 'grok-3', messages: [{ role: 'user', content: prompt }], max_tokens: 1024 })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `Grok ${resp.status}`); }
+  const data = await resp.json();
+  return { text: data.choices[0].message.content.trim(), name: 'xAI Grok-3' };
+}
+
+async function callMistral(prompt) {
+  const key = getKey('mistral');
+  if (!key) return null;
+  const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: 'mistral-large-latest', messages: [{ role: 'user', content: prompt }], max_tokens: 1024 })
+  });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `Mistral ${resp.status}`); }
+  const data = await resp.json();
+  return { text: data.choices[0].message.content.trim(), name: 'Mistral Large' };
+}
+
+// ── Synthesis ─────────────────────────────────────────────────────
+async function synthesize(responses, originalPrompt) {
+  if (responses.length === 1) return responses[0].text;
+  const formatted = responses.map(r => `[${r.name}]:\n${r.text}`).join('\n\n');
+  const synthesisPrompt = `Multiple AI systems each answered the same question. Synthesize all answers into ONE clear, accurate, complete response. Do NOT mention the AI systems by name. Just deliver the best unified answer.\n\nORIGINAL QUESTION:\n${originalPrompt}\n\nINDIVIDUAL RESPONSES:\n${formatted}\n\nBest unified answer:`;
+  for (const fn of [callOpenAI, callClaude, callGemini, callGroq, callGrok, callMistral]) {
+    try {
+      const r = await fn(synthesisPrompt);
+      if (r?.text) return r.text;
+    } catch(e) {}
+  }
+  return formatted;
+}
+
+// ── Ultra Router ──────────────────────────────────────────────────
+async function ultraRoute(prompt) {
+  const callers = [
+    { fn: callOpenAI,  id: 'openai'  },
+    { fn: callClaude,  id: 'claude'  },
+    { fn: callGemini,  id: 'gemini'  },
+    { fn: callGroq,    id: 'groq'    },
+    { fn: callGrok,    id: 'grok'    },
+    { fn: callMistral, id: 'mistral' },
+  ].filter(c => !!getKey(c.id));
+
+  if (callers.length === 0) return { ultra: null, individual: [] };
+
+  // Set all active models to "calling"
+  callers.forEach(c => setPillState(c.id, 'calling'));
+
+  // Fire all simultaneously
+  const settled = await Promise.allSettled(
+    callers.map(c =>
+      c.fn(prompt)
+        .then(r => { setPillState(c.id, r ? 'done' : 'inactive'); return r; })
+        .catch(e => { setPillState(c.id, 'error'); throw e; })
+    )
+  );
+
+  const results = settled
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value);
+
+  if (results.length === 0) return { ultra: null, individual: [] };
+
+  let ultra = results[0].text;
+  if (results.length > 1 && document.getElementById('synthesizeToggle').checked) {
+    document.getElementById('thinkingText').textContent = `Synthesizing ${results.length} responses…`;
+    ultra = await synthesize(results, prompt);
+  }
+
+  return { ultra, individual: results };
+}
+
+// ── Send Message ──────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const raw = input.value.trim();
+  if (!raw || isBusy) return;
+
+  const anyKey = MODELS.some(m => !!getKey(m.id));
+  if (!anyKey) {
+    appendMsg('system', '⚠️ No API keys configured. Open the key panel (🔑) and save at least one key.');
+    return;
+  }
+
+  isBusy = true;
+  document.getElementById('sendBtn').disabled = true;
+  const prompt = optimizeRequest(raw);
+  input.value = '';
+  updateTokenBar();
+
+  // User message
+  appendMsg('user', escHtml(raw));
+
+  // Save to memory
+  if (document.getElementById('memoryToggle').checked) {
+    adamMemory.push({ role: 'user', text: raw, ts: Date.now() });
+    if (adamMemory.length > 50) adamMemory.shift();
+    localStorage.setItem('adam_history', JSON.stringify(adamMemory));
+    renderMemory();
+  }
+
+  // Build context prompt
+  let contextPrompt = prompt;
+  if (document.getElementById('memoryToggle').checked && adamMemory.length > 1) {
+    const recent = adamMemory.slice(-6).map(m => `${m.role === 'user' ? 'User' : 'ADAM'}: ${m.text}`).join('\n');
+    contextPrompt = `Conversation context:\n${recent}\n\nCurrent question: ${prompt}`;
+  }
+
+  // Show thinking
+  const thinking = document.getElementById('thinkingIndicator');
+  thinking.classList.add('active');
+  document.getElementById('thinkingText').textContent = 'Querying all LLMs in parallel…';
+  document.getElementById('responsesContainer').style.display = 'none';
+  document.getElementById('ultraBox').style.display = 'none';
+
+  try {
+    const { ultra, individual } = await ultraRoute(contextPrompt);
+
+    thinking.classList.remove('active');
+
+    if (!ultra) {
+      appendMsg('system', '⚠️ All configured LLMs failed to respond. Check your keys and try again.');
+      isBusy = false;
+      document.getElementById('sendBtn').disabled = false;
+      return;
+    }
+
+    // Show individual responses (collapsible)
+    if (individual.length > 1) {
+      const container = document.getElementById('responsesContainer');
+      container.style.display = 'flex';
+      container.innerHTML = individual.map((r, i) => `
+        <div class="response-item">
+          <div class="response-header" onclick="toggleResponse(this)">
+            <div class="model-name"><i class="fa-solid fa-microchip" style="font-size:0.7rem"></i> ${escHtml(r.name)}</div>
+            <i class="fa-solid fa-chevron-down chevron"></i>
+          </div>
+          <div class="response-body">${escHtml(r.text)}</div>
+        </div>`).join('');
+    }
+
+    // Ultra Smart Response
+    const ultraBox = document.getElementById('ultraBox');
+    ultraBox.style.display = 'block';
+    document.getElementById('ultraText').textContent = ultra;
+    appendMsg('adam', escHtml(ultra), individual.length > 1 ? 'Ultra Smart Response' : individual[0]?.name || 'ADAM');
+
+    // TTS
+    if (ttsEnabled) speakText(ultra);
+
+    // Save ADAM response to memory
+    if (document.getElementById('memoryToggle').checked) {
+      adamMemory.push({ role: 'adam', text: ultra, ts: Date.now() });
+      localStorage.setItem('adam_history', JSON.stringify(adamMemory));
+      renderMemory();
+    }
+
+  } catch(err) {
+    thinking.classList.remove('active');
+    appendMsg('system', '⚠️ Error: ' + escHtml(err.message));
+  }
+
+  isBusy = false;
+  document.getElementById('sendBtn').disabled = false;
+  renderStatusPills();
+}
+
+// ── Response toggle ───────────────────────────────────────────────
+function toggleResponse(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.toggle('open');
+  header.classList.toggle('open', isOpen);
+}
+
+// ── Ultra actions ─────────────────────────────────────────────────
+function copyUltra() {
+  const text = document.getElementById('ultraText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.ultra-actions button');
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    setTimeout(() => btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copy', 2000);
+  });
+}
+
+function speakUltra() {
+  speakText(document.getElementById('ultraText').textContent);
+}
+
+function clearChat() {
+  document.getElementById('chatHistory').innerHTML = '<div class="chat-msg system">Chat cleared. Ready for new questions.</div>';
+  document.getElementById('responsesContainer').style.display = 'none';
+  document.getElementById('ultraBox').style.display = 'none';
+  renderStatusPills();
+}
+
+// ── TTS ───────────────────────────────────────────────────────────
+function toggleTTS() {
+  ttsEnabled = !ttsEnabled;
+  const btn = document.getElementById('ttsBtn');
+  btn.classList.toggle('active', ttsEnabled);
+  btn.title = ttsEnabled ? 'Text-to-speech ON (click to disable)' : 'Text-to-speech OFF';
+}
+
+function speakText(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text.slice(0, 1000));
+  utter.lang = 'en-US';
+  utter.rate = 1;
+  utter.pitch = 1.05;
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.toLowerCase().includes('female')) ||
+                    voices.find(v => v.lang === 'en-US') || voices[0];
+  if (preferred) utter.voice = preferred;
+  window.speechSynthesis.speak(utter);
+}
+
+// ── Voice / Mic ───────────────────────────────────────────────────
+function toggleMicAccess(enabled) {
+  micEnabled = enabled;
+  const status = document.getElementById('speechStatus');
+  if (enabled && !('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    status.textContent = '⚠️ Not supported in this browser. Use Chrome or Edge.';
+    status.style.color = 'var(--accent2)';
+    document.getElementById('micEnabledToggle').checked = false;
+    micEnabled = false;
+  } else {
+    status.textContent = enabled ? '✓ Microphone enabled. Click 🎤 to speak.' : 'Microphone disabled.';
+    status.style.color = enabled ? 'var(--green)' : 'var(--muted)';
+  }
+}
+
+function toggleMic() {
+  if (!micEnabled) {
+    appendMsg('system', '⚠️ Enable the microphone toggle in the Voice panel first.');
+    return;
+  }
+  if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+    appendMsg('system', '⚠️ Speech recognition requires Chrome or Edge.');
+    return;
+  }
+  if (recognizing) {
+    recognition?.stop();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  recognition.onstart = () => {
+    recognizing = true;
+    document.getElementById('micBtn').classList.add('active');
+    document.getElementById('micBtn').title = 'Listening… click to stop';
+  };
+  recognition.onresult = (event) => {
+    let final = '', interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) final += t; else interim += t;
+    }
+    document.getElementById('chatInput').value = final || interim;
+    updateTokenBar();
+  };
+  recognition.onerror = (event) => {
+    const msgs = {
+      'not-allowed': 'Microphone permission denied. Allow it in your browser settings.',
+      'no-speech': 'No speech detected. Please try again.',
+      'audio-capture': 'No microphone found.',
+      'network': 'Network error during speech recognition.',
+    };
+    appendMsg('system', '⚠️ ' + (msgs[event.error] || 'Mic error: ' + event.error));
+  };
+  recognition.onend = () => {
+    recognizing = false;
+    document.getElementById('micBtn').classList.remove('active');
+    document.getElementById('micBtn').title = 'Voice input';
+    // Auto-send if there's input
+    if (document.getElementById('chatInput').value.trim()) sendMessage();
+  };
+  recognition.start();
+}
+
+// ── Memory ────────────────────────────────────────────────────────
+function renderMemory() {
+  const list = document.getElementById('memoryList');
+  if (!adamMemory.length) {
+    list.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);text-align:center;padding:0.5rem;">No history yet</div>';
+    return;
+  }
+  list.innerHTML = adamMemory.slice(-10).reverse().map(m => `
+    <div class="memory-entry">
+      <i class="fa-solid ${m.role === 'user' ? 'fa-user' : 'fa-robot'}" style="color:${m.role==='user'?'var(--blue)':'var(--accent)'}; font-size:0.65rem;"></i>
+      <span>${escHtml(m.text.slice(0, 60))}${m.text.length > 60 ? '…' : ''}</span>
+    </div>`).join('');
+}
+
+function clearMemory() {
+  adamMemory = [];
+  localStorage.removeItem('adam_history');
+  renderMemory();
+  appendMsg('system', '🗑 Memory cleared.');
+}
+
+// ── Collapsible ───────────────────────────────────────────────────
+function toggleCollapsible(bodyId, headerId) {
+  const body = document.getElementById(bodyId);
+  const header = document.getElementById(headerId);
+  const isOpen = body.classList.toggle('open');
+  header.classList.toggle('open', isOpen);
+}
+
+function togglePanel(id) {
+  const panel = document.getElementById(id);
+  panel.style.display = panel.style.display === 'none' ? '' : 'none';
+}
+
+// ── Util ──────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+function init() {
+  loadState();
+  loadKeyFields();
+  renderStatusPills();
+  updateTokenBar();
+
+  // Speech API check
+  const hasSpeech = 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+  document.getElementById('speechStatus').textContent = hasSpeech
+    ? 'Web Speech API: available (Chrome/Edge)'
+    : '⚠️ Not available in this browser. Use Chrome or Edge for voice.';
+  document.getElementById('speechStatus').style.color = hasSpeech ? 'var(--green)' : 'var(--accent2)';
+
+  // Load voices for TTS
+  if (window.speechSynthesis) window.speechSynthesis.getVoices();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
