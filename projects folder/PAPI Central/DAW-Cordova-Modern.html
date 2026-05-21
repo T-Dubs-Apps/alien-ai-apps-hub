@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAW Cordova App Launcher</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/727/727245.png" type="image/png">
+  <style>
+    body { background: #0a0e1a; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center text-white">
+  <div class="w-full max-w-lg p-8 bg-gray-900 rounded-xl shadow-2xl mt-10">
+    <div class="flex items-center justify-center mb-6">
+      <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="DAW Logo" class="w-12 h-12 mr-3">
+      <h1 class="text-3xl font-bold text-cyan-300">DAW Cordova App Launcher</h1>
+    </div>
+    <p class="mb-6 text-center text-gray-300">Launch your DAW Cordova app with one click. The launcher detects running servers and provides clear guidance for each option.</p>
+    <div id="serverStatus" class="mb-4 text-center"></div>
+    <div class="space-y-4">
+      <button id="openLocal" class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-400" aria-label="Open Local File">
+        📂 Open Local File (E:/DAW-Cordova/www/index.html)
+      </button>
+      <button id="open8080" class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-400" aria-label="Open on Port 8080">
+        🌐 Open on Port 8080 (if server running)
+      </button>
+      <button id="open3000" class="w-full py-3 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-400" aria-label="Open on Port 3000">
+        🌐 Open on Port 3000 (if server running)
+      </button>
+    </div>
+    <div class="mt-8 p-4 bg-cyan-900 bg-opacity-30 rounded-lg border-l-4 border-cyan-400">
+      <h3 class="text-cyan-300 font-semibold mb-2">ℹ️ Quick Start & Troubleshooting</h3>
+      <ul class="list-disc ml-6 text-gray-200 text-sm space-y-1">
+        <li><b>Option 1:</b> Opens the HTML file directly from E:/DAW-Cordova/www</li>
+        <li><b>Option 2:</b> Use if you started a server with <span class="bg-gray-800 px-2 py-1 rounded">python -m http.server 8080</span></li>
+        <li><b>Option 3:</b> Use if you started a Node.js server on port 3000</li>
+        <li>If a button is disabled, the server is not detected or the file is unavailable.</li>
+        <li>If nothing opens, check your firewall, server status, or file path.</li>
+      </ul>
+    </div>
+    <div class="mt-6 text-center">
+      <a href="#" onclick="window.history.back()" class="text-cyan-400 hover:underline text-sm">⬅️ Back to PAPI Central</a>
+    </div>
+  </div>
+  <script>
+    // Server detection
+    async function checkServer(url) {
+      try {
+        const resp = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+    async function updateServerStatus() {
+      const statusDiv = document.getElementById('serverStatus');
+      let status = '';
+      let found = false;
+      // Check 8080
+      try {
+        await fetch('http://localhost:8080', { method: 'HEAD', mode: 'no-cors' });
+        status += '<span class="text-green-400">Port 8080: Online</span> | ';
+        document.getElementById('open8080').disabled = false;
+        found = true;
+      } catch { 
+        status += '<span class="text-red-400">Port 8080: Offline</span> | ';
+        document.getElementById('open8080').disabled = true;
+      }
+      // Check 3000
+      try {
+        await fetch('http://localhost:3000', { method: 'HEAD', mode: 'no-cors' });
+        status += '<span class="text-green-400">Port 3000: Online</span>';
+        document.getElementById('open3000').disabled = false;
+        found = true;
+      } catch {
+        status += '<span class="text-red-400">Port 3000: Offline</span>';
+        document.getElementById('open3000').disabled = true;
+      }
+      statusDiv.innerHTML = status;
+    }
+    updateServerStatus();
+    // Button handlers
+    document.getElementById('openLocal').onclick = function() {
+      window.open('file:///e:/DAW-Cordova/www/index.html', '_blank');
+    };
+    document.getElementById('open8080').onclick = function() {
+      window.open('http://localhost:8080', '_blank');
+    };
+    document.getElementById('open3000').onclick = function() {
+      window.open('http://localhost:3000', '_blank');
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+# Alien AI Apps Hub — .gitignore
+
+# Sensitive data — NEVER commit
+Secrets2/
+*secrets*
+*API*.txt
+*.key
+.env
+.env.*
+
+# Large binaries
+*.dmg
+*.iso
+*.zip
+*.exe
+*.msi
+
+# Windows system files
+*.lnk
+*.url
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Node / package installs
+node_modules/
+npm-debug.log*
+
+# Backup dumps (hundreds of files)
+_papi_backup/
+99_THE_SCRAP_YARD/
+
+# Git nested repos
+projects folder/PAPI Clones/PAPI_CENTRAL_V2/.git/
+
+# OS junk
+.DS_Store
+__MACOSX/
+
+# Build artifacts
+dist/
+build/
+*.log
