@@ -4987,11 +4987,11 @@
         const AppHub = {
             apps: [
                 {
-                    id: 'alien-ai-assistant', name: 'Alien AI Assistant', icon: '👽',
+                    id: 'alien-ai-assistant', name: 'Alien AI Spaceship', icon: '👽',
                     iconBg: 'linear-gradient(135deg,#00f2ea,#0080ff)',
-                    desc: 'Your primary AI command center. Chat, code, repair, and control all apps from this spaceship.',
+                    desc: 'Your main AI-powered spaceship command center. Chat, code, get repairs, and launch all apps from here.',
                     category: 'ai', price: 0, status: 'owned',
-                    badge: 'owned', action: 'launch', file: 'Alien AI Spaceship.html',
+                    badge: 'owned', action: 'launch', file: null,
                     tags: ['ai', 'chat', 'repair', 'hub']
                 },
                 {
@@ -5283,7 +5283,8 @@
                     actionBtn = `<button class="hub-action-btn hub-btn-repair" onclick="AppRepairAgent.openModal()"><i class="fa-solid fa-wrench mr-1"></i>Open Repair Agent</button>`;
                 } else if (isOwned && appHref) {
                     // <a> tag — guaranteed to open, never blocked by popup blockers
-                    actionBtn = `<a class="hub-action-btn hub-btn-launch" href="${appHref}" target="_blank" rel="noopener" onclick="AppHub.close()"><i class="fa-solid fa-play mr-1"></i>Launch</a>`;
+                    // On file:// protocol, intercept and use launchApp for same-tab navigation
+                    actionBtn = `<a class="hub-action-btn hub-btn-launch" href="${appHref}" target="_blank" rel="noopener" onclick="if(window.location.protocol==='file:'){event.preventDefault();AppHub.launchApp('${app.id}');}else{AppHub.close();}"><i class="fa-solid fa-play mr-1"></i>Launch</a>`;
                 } else if (isOwned) {
                     actionBtn = `<button class="hub-action-btn hub-btn-launch" onclick="AppHub.launchApp('${app.id}')"><i class="fa-solid fa-play mr-1"></i>Launch</button>`;
                 } else {
@@ -5325,7 +5326,7 @@
                 try {
                     const app = this.apps.find(a => a.id === id);
                     if (!app) return;
-                    if (app.id === 'alien-ai-assistant') { this.close(); return; }
+                    if (app.id === 'alien-ai-assistant') { this.close(); addChat('ai', '🛸 You\'re already aboard the Alien AI Spaceship! Ask me anything.'); return; }
                     if (app.file) {
                         // Handle absolute URLs (http/https) vs relative paths
                         let fullUrl;
