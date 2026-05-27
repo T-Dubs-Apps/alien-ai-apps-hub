@@ -103,7 +103,7 @@
         <button class="btn-outline text-xs py-1.5 px-3" onclick="openProvider('claude')">
           <i class="fas fa-external-link-alt mr-1"></i>Get API Key
         </button>
-        <span class="text-xs text-slate-500">→ console.anthropic.com/keys</span>
+        <span class="text-xs text-slate-500">→ console.anthropic.com/settings/keys</span>
         <button class="text-xs text-slate-600 hover:text-slate-400 ml-auto underline" onclick="skipKey('claude')">Skip for now</button>
       </div>
     </div>
@@ -171,7 +171,7 @@ const PROVIDERS = {
   },
   claude: {
     storageKey: 'claude_api_key',
-    url: 'https://console.anthropic.com/keys',
+    url: 'https://console.anthropic.com/settings/keys',
     validate: v => v.trim().startsWith('sk-ant') && v.trim().length > 20,
   },
   gemini: {
