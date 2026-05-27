@@ -4282,48 +4282,59 @@
         }
 
         function initSpeech() {
-            if ('webkitSpeechRecognition' in window) {
-                const SR = window.webkitSpeechRecognition;
-                state.recognition = new SR();
-                state.recognition.continuous = false;
-                state.recognition.interimResults = true; // Show text as you speak
-                
-                state.recognition.onresult = (e) => {
-                    const input = document.getElementById('cmd-input');
-                    const transcript = e.results[0][0].transcript;
-                    
-                    // Show the text in the input box
-                    input.value = transcript;
-                    
-                    // If final result, send the command
-                    if (e.results[0].isFinal) {
-                        setTimeout(() => {
-                            actions.sendCmd();
-                            actions.toggleMic();
-                        }, 100);
+            // Support both standard and webkit-prefixed Speech API
+            const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechAPI) return; // No speech support in this browser
+
+            state.recognition = new SpeechAPI();
+            state.recognition.continuous = false;
+            state.recognition.interimResults = true;
+            state.recognition.lang = navigator.language || 'en-US';
+
+            state.recognition.onresult = (e) => {
+                const input = document.getElementById('cmd-input');
+                const transcript = e.results[0][0].transcript;
+                input.value = transcript;
+                if (e.results[0].isFinal) {
+                    setTimeout(() => {
+                        actions.sendCmd();
+                        actions.toggleMic();
+                    }, 100);
+                }
+            };
+
+            state.recognition.onend = () => {
+                document.getElementById('mic-btn').classList.remove('mic-active');
+                const sb = document.getElementById('stop-mic-btn');
+                if (sb) { sb.classList.add('hidden'); sb.classList.remove('flex'); }
+            };
+
+            state.recognition.onerror = (e) => {
+                console.warn('Speech recognition error:', e.error);
+                document.getElementById('mic-btn').classList.remove('mic-active');
+                const sb = document.getElementById('stop-mic-btn');
+                if (sb) { sb.classList.add('hidden'); sb.classList.remove('flex'); }
+
+                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                    addChat('ai', '🎤 Microphone access was denied. Click the 🔒 icon in your browser\'s address bar, allow the microphone, then refresh the page.');
+                } else if (e.error === 'audio-capture') {
+                    addChat('ai', '🎤 No microphone detected. Please connect a microphone and try again.');
+                } else if (e.error === 'network') {
+                    // Chrome's Web Speech API requires HTTPS or localhost — it fails on file:// URLs
+                    // even when the device IS connected to the internet.
+                    const isFileProtocol = location.protocol === 'file:';
+                    if (isFileProtocol) {
+                        addChat('ai', '🎤 Voice input needs a secure connection to work in Chrome.\n\n' +
+                            'You\'re opening the app as a local file, which Chrome blocks for speech recognition.\n\n' +
+                            '✅ Try Microsoft Edge — it uses a different speech engine that works with local files.\n' +
+                            '✅ Or serve the app through a local web server (e.g. VS Code Live Server, Python http.server).');
+                    } else {
+                        addChat('ai', '🌐 Speech recognition encountered a network error. Make sure you\'re connected to the internet, then try again.');
                     }
-                };
-                
-                state.recognition.onend = () => { 
-                    document.getElementById('mic-btn').classList.remove('mic-active');
-                    const sb = document.getElementById('stop-mic-btn');
-                    if(sb){ sb.classList.add('hidden'); sb.classList.remove('flex'); }
-                };
-                
-                state.recognition.onerror = (e) => {
-                    console.warn('Speech recognition error:', e.error);
-                    document.getElementById('mic-btn').classList.remove('mic-active');
-                    const sb = document.getElementById('stop-mic-btn');
-                    if(sb){ sb.classList.add('hidden'); sb.classList.remove('flex'); }
-                    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                        addChat('ai', '🎤 Microphone access was denied. Click the 🔒 or camera icon in your browser address bar and allow microphone, then refresh the page.');
-                    } else if (e.error === 'audio-capture') {
-                        addChat('ai', '🎤 No microphone detected. Please connect a microphone and try again.');
-                    } else if (e.error === 'network') {
-                        addChat('ai', '🌐 Speech recognition needs an internet connection. Check your connection and try again.');
-                    }
-                };
-            }
+                } else {
+                    addChat('ai', `🎤 Voice input error (${e.error}). Please try again.`);
+                }
+            };
         }
 
         // Setup Carousel Interaction
