@@ -79,7 +79,7 @@ jobs:
             | Provider | Where to Get It | Required? |
             |----------|----------------|-----------|
             | OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | ✅ Required |
-            | Claude (Anthropic) | [console.anthropic.com/keys](https://console.anthropic.com/keys) | Recommended |
+            | Claude (Anthropic) | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) | Recommended |
             | Gemini (Google AI) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Recommended |
 
             > Keys are stored only in your browser's local storage and are never sent anywhere except the provider API directly.
