@@ -1,0 +1,91 @@
+name: Build & Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: ver
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "TAG=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release zip
+        run: |
+          ZIP_NAME="alien-ai-apps-hub-${{ steps.ver.outputs.TAG }}.zip"
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+
+          # Assemble a clean staging directory
+          mkdir -p staging
+
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='_papi_backup' \
+            --exclude='Secrets2' \
+            --exclude='*.key' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='Thumbs.db' \
+            --exclude='desktop.ini' \
+            . staging/
+
+          cd staging
+          zip -r "../$ZIP_NAME" .
+          cd ..
+
+          echo "Built: $ZIP_NAME ($(du -sh "$ZIP_NAME" | cut -f1))"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.TAG }}
+          name: "PAPI Central ${{ steps.ver.outputs.TAG }}"
+          body: |
+            ## 👽 PAPI Central ${{ steps.ver.outputs.TAG }}
+
+            ### Quick Install (Windows)
+            1. Download `alien-ai-apps-hub-${{ steps.ver.outputs.TAG }}.zip` below
+            2. Extract the zip to any folder
+            3. Double-click **`install.bat`** for the guided installer
+               - Picks your install location
+               - Creates a Desktop shortcut
+               - Opens the API key setup wizard automatically
+            4. **Or** open `setup.html` directly in your browser to skip straight to key setup
+
+            ### API Keys You Will Need
+            | Provider | Where to Get It | Required? |
+            |----------|----------------|-----------|
+            | OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) | ✅ Required |
+            | Claude (Anthropic) | [console.anthropic.com/keys](https://console.anthropic.com/keys) | Recommended |
+            | Gemini (Google AI) | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Recommended |
+
+            > Keys are stored only in your browser's local storage and are never sent anywhere except the provider API directly.
+
+            ---
+            _Built automatically from tag `${{ steps.ver.outputs.TAG }}`_
+          files: ${{ env.ZIP_NAME }}
+          draft: false
+          prerelease: false

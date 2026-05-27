@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PAPI Central — Setup Wizard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Space+Mono:wght@400;700&display=swap');
+    body { font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%); min-height: 100vh; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; }
+    .provider-card { transition: all 0.3s; border: 2px solid rgba(255,255,255,0.08); }
+    .provider-card.ready { border-color: rgba(56,189,248,0.6); background: rgba(56,189,248,0.07); }
+    .provider-card.skipped { border-color: rgba(148,163,184,0.3); opacity: 0.7; }
+    .key-input { background: rgba(0,0,0,0.4); border: 1px solid rgba(56,189,248,0.25); color: #e2e8f0; border-radius: 0.6rem; padding: 0.6rem 1rem; width: 100%; font-family: 'Space Mono', monospace; font-size: 0.8rem; outline: none; transition: border-color 0.2s; }
+    .key-input:focus { border-color: rgba(56,189,248,0.7); }
+    .key-input.valid { border-color: rgba(34,197,94,0.7); }
+    .key-input.invalid { border-color: rgba(239,68,68,0.7); }
+    .btn-primary { background: linear-gradient(90deg, #38bdf8, #d946ef); color: #fff; border: none; border-radius: 0.75rem; padding: 0.65rem 1.5rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+    .btn-outline { background: transparent; border: 1px solid rgba(56,189,248,0.4); color: #38bdf8; border-radius: 0.75rem; padding: 0.65rem 1.5rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-outline:hover { background: rgba(56,189,248,0.1); }
+    .btn-save { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.5); color: #4ade80; border-radius: 0.6rem; padding: 0.5rem 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-save:hover { background: rgba(34,197,94,0.25); }
+    .btn-save.saved { background: rgba(34,197,94,0.2); border-color: #4ade80; }
+    .progress-fill { background: linear-gradient(90deg, #38bdf8, #d946ef); height: 6px; border-radius: 3px; transition: width 0.5s ease; }
+    .badge-ready { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+    .badge-missing { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.35); }
+    .badge-optional { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+    .launch-glow { box-shadow: 0 0 30px rgba(56,189,248,0.4), 0 0 60px rgba(217,70,239,0.25); }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .float { animation: float 3s ease-in-out infinite; }
+    @keyframes spin-slow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    .spin-slow { animation: spin-slow 8s linear infinite; }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+
+  <!-- Header -->
+  <div class="max-w-2xl mx-auto mb-8 text-center">
+    <div class="text-5xl mb-3 float">👽</div>
+    <h1 class="text-3xl font-bold text-white mb-1">PAPI Central Setup</h1>
+    <p class="text-slate-400">Configure your API keys to activate all AI features.</p>
+    <!-- Progress Bar -->
+    <div class="mt-5 mb-1">
+      <div class="flex justify-between text-xs text-slate-500 mb-1">
+        <span>Setup progress</span>
+        <span id="progress-label">0 / 3 configured</span>
+      </div>
+      <div class="bg-slate-800 rounded-full h-1.5">
+        <div id="progress-bar" class="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provider Cards -->
+  <div class="max-w-2xl mx-auto space-y-4" id="providers-container">
+
+    <!-- OpenAI -->
+    <div class="glass provider-card rounded-2xl p-5" id="card-openai">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-xl">🤖</div>
+          <div>
+            <div class="font-bold text-white text-base">OpenAI <span class="text-xs font-normal text-slate-400 ml-1">(GPT-4o, DALL-E, Whisper)</span></div>
+            <div class="text-xs text-slate-500 mt-0.5">Required — powers the core AI assistant</div>
+          </div>
+        </div>
+        <span id="badge-openai" class="text-xs font-semibold px-2.5 py-1 rounded-full badge-missing">Missing</span>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <input class="key-input" id="input-openai" type="password" placeholder="sk-proj-… or sk-…" autocomplete="off" oninput="validateInput('openai')">
+        <button class="btn-save" id="save-openai" onclick="saveKey('openai')">Save</button>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button class="btn-outline text-xs py-1.5 px-3" onclick="openProvider('openai')">
+          <i class="fas fa-external-link-alt mr-1"></i>Get API Key
+        </button>
+        <span class="text-xs text-slate-500">→ platform.openai.com/api-keys</span>
+        <button class="text-xs text-slate-600 hover:text-slate-400 ml-auto underline" onclick="skipKey('openai')">Skip for now</button>
+      </div>
+    </div>
+
+    <!-- Claude / Anthropic -->
+    <div class="glass provider-card rounded-2xl p-5" id="card-claude">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-xl">🧠</div>
+          <div>
+            <div class="font-bold text-white text-base">Claude <span class="text-xs font-normal text-slate-400 ml-1">(Anthropic)</span></div>
+            <div class="text-xs text-slate-500 mt-0.5">Recommended — advanced reasoning and analysis</div>
+          </div>
+        </div>
+        <span id="badge-claude" class="text-xs font-semibold px-2.5 py-1 rounded-full badge-optional">Optional</span>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <input class="key-input" id="input-claude" type="password" placeholder="sk-ant-api03-…" autocomplete="off" oninput="validateInput('claude')">
+        <button class="btn-save" id="save-claude" onclick="saveKey('claude')">Save</button>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button class="btn-outline text-xs py-1.5 px-3" onclick="openProvider('claude')">
+          <i class="fas fa-external-link-alt mr-1"></i>Get API Key
+        </button>
+        <span class="text-xs text-slate-500">→ console.anthropic.com/keys</span>
+        <button class="text-xs text-slate-600 hover:text-slate-400 ml-auto underline" onclick="skipKey('claude')">Skip for now</button>
+      </div>
+    </div>
+
+    <!-- Gemini -->
+    <div class="glass provider-card rounded-2xl p-5" id="card-gemini">
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-xl">✨</div>
+          <div>
+            <div class="font-bold text-white text-base">Gemini <span class="text-xs font-normal text-slate-400 ml-1">(Google AI)</span></div>
+            <div class="text-xs text-slate-500 mt-0.5">Recommended — multimodal AI and Google integrations</div>
+          </div>
+        </div>
+        <span id="badge-gemini" class="text-xs font-semibold px-2.5 py-1 rounded-full badge-optional">Optional</span>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <input class="key-input" id="input-gemini" type="password" placeholder="AIzaSy…" autocomplete="off" oninput="validateInput('gemini')">
+        <button class="btn-save" id="save-gemini" onclick="saveKey('gemini')">Save</button>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button class="btn-outline text-xs py-1.5 px-3" onclick="openProvider('gemini')">
+          <i class="fas fa-external-link-alt mr-1"></i>Get API Key
+        </button>
+        <span class="text-xs text-slate-500">→ aistudio.google.com/apikey</span>
+        <button class="text-xs text-slate-600 hover:text-slate-400 ml-auto underline" onclick="skipKey('gemini')">Skip for now</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Action Area -->
+  <div class="max-w-2xl mx-auto mt-8 flex flex-col items-center gap-3">
+    <button id="launch-btn" class="btn-primary w-full py-3.5 text-lg rounded-2xl" disabled onclick="launch()">
+      <i class="fas fa-rocket mr-2"></i>Launch PAPI Central
+    </button>
+    <p id="launch-hint" class="text-xs text-slate-500 text-center">Enter at least one OpenAI key above to activate launch</p>
+    <button class="btn-outline text-sm py-2 px-5" onclick="openKeyController()">
+      <i class="fas fa-key mr-2"></i>Advanced Key Manager
+    </button>
+  </div>
+
+  <!-- Already Configured Banner -->
+  <div id="already-configured" class="hidden max-w-2xl mx-auto mt-6 glass rounded-2xl p-4 flex items-center gap-3 border border-emerald-500/30 bg-emerald-500/5">
+    <i class="fas fa-check-circle text-emerald-400 text-xl"></i>
+    <div>
+      <div class="text-white font-semibold text-sm">Setup already complete!</div>
+      <div class="text-slate-400 text-xs">Your API keys are saved. You can update them above or jump straight in.</div>
+    </div>
+    <button class="btn-primary ml-auto py-2 px-4 text-sm" onclick="launch()">
+      <i class="fas fa-rocket mr-1"></i>Launch
+    </button>
+  </div>
+
+  <p class="text-center text-xs text-slate-700 mt-10">
+    Keys are stored only in your browser's local storage — never sent anywhere except the AI provider directly.
+  </p>
+
+<script>
+const PROVIDERS = {
+  openai: {
+    storageKey: 'openai_api_key1',
+    url: 'https://platform.openai.com/api-keys',
+    validate: v => v.trim().startsWith('sk-') && v.trim().length > 20,
+  },
+  claude: {
+    storageKey: 'claude_api_key',
+    url: 'https://console.anthropic.com/keys',
+    validate: v => v.trim().startsWith('sk-ant') && v.trim().length > 20,
+  },
+  gemini: {
+    storageKey: 'gemini_api_key',
+    url: 'https://aistudio.google.com/apikey',
+    validate: v => v.trim().startsWith('AIza') && v.trim().length > 15,
+  }
+};
+
+function openProvider(id) {
+  window.open(PROVIDERS[id].url, '_blank', 'noopener,noreferrer');
+}
+
+function openKeyController() {
+  window.open('key-controller.html', '_blank');
+}
+
+function validateInput(id) {
+  const input = document.getElementById('input-' + id);
+  const val = input.value.trim();
+  if (!val) { input.className = 'key-input'; return; }
+  input.className = 'key-input ' + (PROVIDERS[id].validate(val) ? 'valid' : 'invalid');
+}
+
+function saveKey(id) {
+  const input = document.getElementById('input-' + id);
+  const val = input.value.trim();
+  if (!val) return;
+  localStorage.setItem(PROVIDERS[id].storageKey, val);
+  // Also save as key2/3/4 slot for OpenAI for multi-key support
+  if (id === 'openai') {
+    if (!localStorage.getItem('openai_api_key1')) localStorage.setItem('openai_api_key1', val);
+  }
+  markReady(id);
+  input.value = '';
+  input.placeholder = '••••••••••••••••••••';
+  input.className = 'key-input valid';
+  updateProgress();
+}
+
+function markReady(id) {
+  const card = document.getElementById('card-' + id);
+  const badge = document.getElementById('badge-' + id);
+  card.classList.add('ready');
+  card.classList.remove('skipped');
+  badge.textContent = 'Ready ✓';
+  badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full badge-ready';
+  const saveBtn = document.getElementById('save-' + id);
+  saveBtn.classList.add('saved');
+  saveBtn.textContent = 'Saved ✓';
+}
+
+function skipKey(id) {
+  const card = document.getElementById('card-' + id);
+  card.classList.add('skipped');
+  updateProgress();
+}
+
+function updateProgress() {
+  const configured = Object.keys(PROVIDERS).filter(id => {
+    return !!localStorage.getItem(PROVIDERS[id].storageKey);
+  }).length;
+
+  const pct = Math.round((configured / 3) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = configured + ' / 3 configured';
+
+  const hasOpenAI = !!localStorage.getItem('openai_api_key1') ||
+                    !!localStorage.getItem('openai_api_key2') ||
+                    !!localStorage.getItem('openai_api_key3') ||
+                    !!localStorage.getItem('openai_api_key4');
+  const launchBtn = document.getElementById('launch-btn');
+  const launchHint = document.getElementById('launch-hint');
+
+  if (hasOpenAI) {
+    launchBtn.disabled = false;
+    launchBtn.classList.add('launch-glow');
+    launchHint.textContent = configured === 3
+      ? '🎉 All providers configured — you\'re fully set up!'
+      : 'You can add more keys later via Key Controller.';
+  }
+}
+
+function launch() {
+  localStorage.setItem('papi_setup_complete', '1');
+  window.location.href = 'index.html';
+}
+
+// On load — check existing keys
+window.addEventListener('DOMContentLoaded', () => {
+  let anyConfigured = false;
+
+  Object.keys(PROVIDERS).forEach(id => {
+    const val = localStorage.getItem(PROVIDERS[id].storageKey);
+    if (val) {
+      markReady(id);
+      anyConfigured = true;
+    }
+  });
+
+  updateProgress();
+
+  if (anyConfigured) {
+    document.getElementById('already-configured').classList.remove('hidden');
+  }
+});
+</script>
+</body>
+</html>
