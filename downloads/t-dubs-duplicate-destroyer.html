@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T-Dubs Duplicate Destroyer — Download</title>
+<style>
+  :root{
+    --mint:#00f2ea; --blue:#0080ff; --purple:#d946ef;
+    --bg:#050a14; --panel:#0a1428; --line:rgba(0,242,234,0.25);
+    --text:#e6f0ff; --muted:#64748b; --green:#22c55e;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,Arial,sans-serif;
+    background:linear-gradient(180deg,#050a14 0%,#0a1428 100%);
+    color:var(--text); min-height:100vh; padding:32px 18px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto}
+  .back{
+    display:inline-flex;align-items:center;gap:8px;color:var(--mint);
+    text-decoration:none;font-size:.85rem;font-weight:600;
+    border:1px solid var(--line);padding:7px 14px;border-radius:10px;
+    margin-bottom:26px;transition:.2s;
+  }
+  .back:hover{background:rgba(0,242,234,.1);box-shadow:0 0 14px rgba(0,242,234,.25)}
+  .hero{display:flex;gap:20px;align-items:center;margin-bottom:14px}
+  .badge-app{
+    width:78px;height:78px;border-radius:20px;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:42px;
+    background:linear-gradient(135deg,#2ea043,#0ea5e9);
+    box-shadow:0 8px 30px rgba(46,160,67,.35);
+  }
+  h1{font-size:1.9rem;font-weight:800;letter-spacing:-.5px}
+  .tag{color:var(--mint);font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+  .lead{color:#b6c6e0;margin:14px 0 26px;line-height:1.6;font-size:1.02rem}
+  .reco{
+    background:rgba(0,242,234,.07);border:1px solid var(--line);
+    border-radius:12px;padding:12px 16px;margin-bottom:22px;font-size:.9rem;color:#cfe;
+  }
+  .reco b{color:var(--mint)}
+  .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:30px}
+  @media(max-width:640px){.dl-grid{grid-template-columns:1fr}}
+  .dl-card{
+    background:var(--panel);border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:22px;transition:.2s;position:relative;overflow:hidden;
+  }
+  .dl-card.primary{border-color:var(--mint);box-shadow:0 0 24px rgba(0,242,234,.12)}
+  .dl-card:hover{transform:translateY(-3px);border-color:var(--line)}
+  .os{font-size:1.5rem;margin-bottom:6px}
+  .dl-card h3{font-size:1.05rem;margin-bottom:4px}
+  .dl-card p{color:var(--muted);font-size:.82rem;line-height:1.5;margin-bottom:16px}
+  .btn{
+    display:block;text-align:center;text-decoration:none;font-weight:700;
+    padding:12px;border-radius:11px;font-size:.92rem;transition:.2s;
+  }
+  .btn-primary{background:linear-gradient(135deg,#00f2ea,#0080ff);color:#021018}
+  .btn-primary:hover{box-shadow:0 0 22px rgba(0,242,234,.5)}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--mint)}
+  .btn-ghost:hover{background:rgba(0,242,234,.1)}
+  .recommend{position:absolute;top:12px;right:12px;background:var(--green);
+    color:#04210f;font-size:.62rem;font-weight:800;padding:3px 8px;border-radius:20px;
+    text-transform:uppercase;letter-spacing:.5px;display:none}
+  .dl-card.is-reco .recommend{display:block}
+  .dl-card.is-reco{outline:2px solid var(--green);outline-offset:-2px}
+  h2{font-size:1.15rem;margin:30px 0 12px;color:var(--mint)}
+  ul.feat{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 22px}
+  @media(max-width:640px){ul.feat{grid-template-columns:1fr}}
+  ul.feat li{font-size:.88rem;color:#cdd9ec;padding-left:24px;position:relative;line-height:1.5}
+  ul.feat li::before{content:'✓';position:absolute;left:0;color:var(--green);font-weight:800}
+  .steps{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px 22px;margin-top:10px}
+  .steps h4{color:var(--blue);font-size:.92rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .steps code{background:#02101f;border:1px solid var(--line);color:var(--mint);
+    padding:2px 7px;border-radius:6px;font-family:Consolas,monospace;font-size:.82rem}
+  .steps ol{margin:0 0 14px 18px;color:#cdd9ec;font-size:.86rem;line-height:1.7}
+  .steps ol:last-child{margin-bottom:0}
+  .note{margin-top:26px;padding:14px 16px;border-radius:12px;font-size:.82rem;line-height:1.55;
+    background:rgba(217,70,239,.07);border:1px solid rgba(217,70,239,.3);color:#e9c9f5}
+  footer{margin-top:34px;text-align:center;color:var(--muted);font-size:.78rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">&larr; Back to Alien AI Hub</a>
+
+  <div class="hero">
+    <div class="badge-app">&#129512;</div>
+    <div>
+      <div class="tag">Productivity &middot; Free</div>
+      <h1>T-Dubs Duplicate Destroyer</h1>
+    </div>
+  </div>
+
+  <p class="lead">
+    Scan any drive, folder, repo, or location and wipe out duplicate files for good.
+    True content matching (size + SHA-256), a side-by-side A/B compare, multi-select,
+    Recycle Bin or permanent delete, plus move, copy, run, and share &mdash; all in one
+    standalone app.
+  </p>
+
+  <div class="reco" id="reco">Detecting your device&hellip;</div>
+
+  <div class="dl-grid">
+    <div class="dl-card primary" id="card-win">
+      <span class="recommend">Recommended</span>
+      <div class="os">&#128421;&#65039; Windows</div>
+      <h3>Windows App (.exe)</h3>
+      <p>One file, no install, no Python needed. Just download and double-click. Best for most people.</p>
+      <a class="btn btn-primary" href="T-Dubs-Duplicate-Destroyer.exe" download>Download for Windows &middot; 11.7 MB</a>
+    </div>
+
+    <div class="dl-card" id="card-src">
+      <span class="recommend">Recommended</span>
+      <div class="os">&#127822; Mac / Linux / Other</div>
+      <h3>Source (cross-platform)</h3>
+      <p>Runs anywhere Python 3 is installed &mdash; Windows, macOS, or Linux. Small download.</p>
+      <a class="btn btn-ghost" href="T-Dubs-Duplicate-Destroyer-source.zip" download>Download source &middot; ZIP</a>
+    </div>
+  </div>
+
+  <h2>What it does</h2>
+  <ul class="feat">
+    <li>Scan any drive, folder, repo or location</li>
+    <li>Search each folder separately (optional)</li>
+    <li>Finds true duplicates by content, not just name</li>
+    <li>Side-by-side BOX A vs BOX B compare</li>
+    <li>Compares sizes, dates, and content verdict</li>
+    <li>Multi-select with keep-newest / keep-oldest</li>
+    <li>Recycle Bin (recoverable) or permanent delete</li>
+    <li>Move, copy, run, open location, share results</li>
+    <li>Drag &amp; drop folders to scan / files to compare</li>
+    <li>Export results to CSV, HTML, or TXT</li>
+  </ul>
+
+  <h2>How to run it</h2>
+  <div class="steps">
+    <h4>&#128421;&#65039; Windows</h4>
+    <ol>
+      <li>Download the <b>.exe</b> above.</li>
+      <li>Double-click <code>T-Dubs-Duplicate-Destroyer.exe</code>.</li>
+      <li>If SmartScreen appears: <b>More info &rarr; Run anyway</b> (it's unsigned, but it's your own app).</li>
+    </ol>
+    <h4>&#127822; macOS / Linux</h4>
+    <ol>
+      <li>Install Python 3 from <code>python.org</code> (if not already installed).</li>
+      <li>Unzip the source download.</li>
+      <li>Run <code>python3 T-Dubs_Duplicate_Destroyer.py</code>.</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <b>Heads up:</b> this is a full <b>desktop</b> tool that needs direct access to your files,
+    so it runs on computers (Windows, macOS, Linux) &mdash; not on phones or tablets, which sandbox
+    apps away from the file system. The Recycle Bin option keeps deletes recoverable on Windows.
+  </div>
+
+  <footer>Part of the Alien AI Hub &middot; built by T-Dubs Apps</footer>
+</div>
+
+<script>
+  // Recommend the right download for the visitor's device
+  (function(){
+    var ua = navigator.userAgent || '';
+    var plat = (navigator.platform || '') + ' ' + ua;
+    var isWin = /Win/i.test(plat);
+    var isMac = /Mac/i.test(plat) && !/iPhone|iPad/i.test(ua);
+    var isLinux = /Linux/i.test(plat) && !/Android/i.test(ua);
+    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    var reco = document.getElementById('reco');
+    var cw = document.getElementById('card-win');
+    var cs = document.getElementById('card-src');
+
+    if (isWin){
+      cw.classList.add('is-reco');
+      reco.innerHTML = 'Looks like you’re on <b>Windows</b> — grab the one-click <b>.exe</b> below. No install needed.';
+    } else if (isMac || isLinux){
+      cs.classList.add('is-reco');
+      reco.innerHTML = 'Looks like you’re on <b>' + (isMac?'macOS':'Linux') + '</b> — use the <b>cross-platform source</b> (needs Python 3).';
+    } else if (isMobile){
+      reco.innerHTML = 'You’re on a <b>mobile device</b>. This is a desktop file tool — download it on a Windows, Mac, or Linux <b>computer</b> to use it.';
+    } else {
+      reco.innerHTML = 'Choose the download that matches your computer below.';
+    }
+  })();
+</script>
+</body>
+</html>

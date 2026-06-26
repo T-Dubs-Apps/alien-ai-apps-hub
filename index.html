@@ -3899,7 +3899,7 @@
                             body: JSON.stringify({
                                 model: model,
                                 messages: [
-                                    {role: 'system', content: 'You are PAPI, an expert AI assistant and code generator inside an alien spaceship interface. Help users build apps, explain concepts, and write clean code. Be helpful, concise, and friendly.'},
+                                    {role: 'system', content: 'You are PAPI, an expert AI assistant and code generator inside an alien spaceship interface. Help users build apps, explain concepts, and write clean code. Be helpful, concise, and friendly. Verify the integrity of your replies: before giving a suggestion or answer, think ahead and test or validate it to find the true result, and research the web when the input or output matters. Present only conclusions you have actually checked, and note what you verified versus assumed. Accuracy over speed.'},
                                     ...AlienAI.conversationHistory.slice(-5).map(m => ({role: m.role, content: m.content})),
                                     {role: 'user', content: message}
                                 ],
@@ -5236,6 +5236,14 @@
                     tags: ['trading', 'finance', 'ai', 'dashboard']
                 },
                 {
+                    id: 't-dubs-duplicate-destroyer', name: 'T-Dubs Duplicate Destroyer', icon: '🧨',
+                    iconBg: 'linear-gradient(135deg,#2ea043,#0ea5e9)',
+                    desc: 'Scan any drive, folder or repo and destroy duplicate files. Side-by-side A/B compare, multi-select, Recycle Bin or permanent delete, plus move, copy, run and share. Standalone download for Windows, Mac & Linux.',
+                    category: 'productivity', price: 0, status: 'owned',
+                    badge: 'free', action: 'launch', file: 'downloads/t-dubs-duplicate-destroyer.html',
+                    tags: ['duplicates', 'cleanup', 'files', 'storage', 'desktop', 'download']
+                },
+                {
                     id: 'smart-ai-runner', name: 'Smart AI Runner+', icon: '🧠',
                     iconBg: 'linear-gradient(135deg,#d946ef,#7c3aed)',
                     desc: 'Advanced AI runner with Cortex engine. Multi-model orchestration, task chains, and automated workflows.',
@@ -5802,7 +5810,7 @@
                 out.textContent = `// Repair Agent working...\n// Mode: ${modeLabels[mode]}\n// File: ${this.droppedFileName || 'pasted code'}\n// Processing ${code.length.toLocaleString()} characters...\n\n// Please wait...`;
                 document.getElementById('repair-stats').textContent = '';
                 const fname = this.droppedFileName || 'app';
-                const systemPrompt = `You are the App Repair Agent, an expert AI system specializing in analyzing and fixing web applications. You have deep expertise in HTML, CSS, JavaScript, TypeScript, React, Vue, and all modern web technologies. When given code to process, you always return ONLY the complete, working, fixed code — no explanations, no markdown code blocks, no commentary. Just the raw code that can be saved directly to a file and run immediately.`;
+                const systemPrompt = `You are the App Repair Agent, an expert AI system specializing in analyzing and fixing web applications. You have deep expertise in HTML, CSS, JavaScript, TypeScript, React, Vue, and all modern web technologies. When given code to process, you always return ONLY the complete, working, fixed code — no explanations, no markdown code blocks, no commentary. Just the raw code that can be saved directly to a file and run immediately. Before returning, verify the integrity of your output: make sure the code is complete, correct, and will run as-is with no missing pieces.`;
                 const userPrompt = `File: ${fname}\n\nTask: ${modePrompts[mode]}\n\nCode to process:\n\n${code}`;
                 const startTime = Date.now();
                 try {
