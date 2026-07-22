@@ -1320,6 +1320,89 @@
         }
         /* ===== END CODE PANEL ===== */
 
+        /* =====================================================================
+           MOBILE / ANDROID USABILITY FIX
+           The app was built as a fixed-viewport desktop "OS" (body locked to
+           100vh with overflow hidden), which trapped everything on one clipped
+           screen on phones. This block frees vertical scrolling, stacks the
+           layout, gives the main area room to flow, and contains the oversized
+           spaceship so the page is fully usable on small screens.
+           ===================================================================== */
+        @media (max-width: 767px) {
+            /* Let the whole app scroll vertically instead of clipping to one screen */
+            html, body {
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow-x: hidden !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+                -webkit-text-size-adjust: 100%;
+            }
+            /* body is a flex ROW (sidebar + main) locked to 100vh — stack & grow it */
+            body.flex {
+                flex-direction: column !important;
+                width: 100% !important;
+                max-width: 100vw !important;
+                height: auto !important;
+            }
+            /* Sidebar rail -> full-width horizontal top bar */
+            body > aside {
+                width: 100% !important;
+                height: auto !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                flex-shrink: 0 !important;
+                border-right: none !important;
+                border-bottom: 1px solid var(--border) !important;
+                position: sticky !important;
+                top: 0;
+                z-index: 45 !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+            body > aside > div { display: flex; align-items: center; gap: 6px; }
+            body > aside nav { margin-top: 0 !important; display: flex; gap: 6px; }
+            body > aside nav button { width: auto !important; padding: 8px 12px !important; }
+            body > aside .h-20 { height: auto !important; border-bottom: none !important; padding: 6px 10px !important; }
+            /* Collapse the bottom System Status panel to save vertical space on phones */
+            body > aside > .p-4 { padding: 6px !important; border-top: none !important; }
+
+            /* Main area grows with its content instead of clipping it */
+            body > main {
+                width: 100% !important;
+                max-width: 100vw !important;
+                height: auto !important;
+                min-height: 70vh;
+                overflow: visible !important;
+            }
+            body > main > header.h-20 { height: auto !important; padding: 10px 14px !important; flex-wrap: wrap; gap: 8px; }
+            #page-title { font-size: 1.25rem !important; }
+
+            /* Contain the 900px spaceship canvas so it never forces a huge off-screen area */
+            .spaceship-container,
+            .spaceship-container.front {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                height: 240px !important;
+                --spaceship-scale: 0.34 !important;
+                margin: 0 auto !important;
+            }
+
+            /* Desktop-only floating tool panels: hide on phones to stop overflow/overlap */
+            #alien-position-controls,
+            #code-panel-wrapper,
+            .layout-toggle-btn { display: none !important; }
+
+            /* Modals: fit the screen and scroll internally instead of overflowing */
+            .onboarding-modal-bg,
+            #tosModal,
+            [id$="-modal"] { padding: 12px !important; }
+            .onboarding-modal,
+            .modal-content,
+            [id$="-modal"] > div:first-child { max-width: 94vw !important; max-height: 88vh !important; overflow-y: auto !important; }
+        }
+
     </style>
 </head>
 <body class="flex h-screen w-full">
