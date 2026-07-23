@@ -1241,6 +1241,8 @@
             transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
         @media (min-width: 768px) { #code-panel-wrapper { left: 256px; } }
+        /* Fully hidden until opened (was leaving a peeking strip on screen) */
+        #code-panel-wrapper:not(.open) { display: none !important; }
         #code-panel-wrapper.open { transform: translateX(0); }
         #code-panel {
             width: 380px; min-width: 380px;
@@ -1874,13 +1876,7 @@
 
                 <div class="scene">
                     <canvas id="lightning-canvas"></canvas>
-                    <!-- Spaceship Size Slider moved into Settings (see #settingsModal) -->
-                    <!-- Voice on/off indicator (kept in the scene) -->
-                    <button id="scene-voice-btn" onclick="toggleVoice()" title="Voice on/off"
-                        style="position:absolute;top:12px;left:12px;z-index:60;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(5,10,20,0.75);border:1px solid rgba(255,255,255,0.12);color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);">
-                        <i id="scene-voice-icon" class="fa-solid fa-volume-xmark"></i>
-                        <span id="scene-voice-text">Voice Off</span>
-                    </button>
+                    <!-- Spaceship Size Slider moved into Settings; Voice indicator moved next to the input box -->
                     <div id="the-ship" class="spaceship-container front">
                         <!-- Purple Trail for Takeoff -->
                         <div class="purple-trail"></div>
@@ -2247,7 +2243,12 @@
                     <button onclick="actions.stopMic()" id="stop-mic-btn" class="w-10 h-10 rounded-lg bg-red-700 hover:bg-red-600 text-white hidden items-center justify-center transition-all flex-shrink-0" title="Stop recording">
                         <i class="fa-solid fa-stop"></i>
                     </button>
-                    <input type="text" id="cmd-input" class="flex-grow bg-transparent border-none text-white font-mono text-sm focus:ring-0 placeholder-slate-500 min-w-0" placeholder="Ask PAPI anything, or type a command..." autocomplete="off">
+                    <!-- Voice on/off toggle (moved back next to the input box) -->
+                    <button id="scene-voice-btn" onclick="toggleVoice()" title="Voice on/off" class="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-all flex-shrink-0">
+                        <i id="scene-voice-icon" class="fa-solid fa-volume-xmark"></i>
+                        <span id="scene-voice-text" class="hidden"></span>
+                    </button>
+                    <input type="text" id="cmd-input" class="flex-grow bg-transparent border-none text-white font-mono text-sm focus:ring-0 placeholder-slate-500 min-w-0" placeholder="Ask the Alien anything, or type a command..." autocomplete="off">
                     <button onclick="actions.sendCmd()" class="w-10 h-10 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center transition-all flex-shrink-0" title="Send (Enter)">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
@@ -2320,7 +2321,8 @@
                 body.textContent += code;
                 // Light up the tab dot to signal new code is available
                 document.getElementById('code-tab-dot').classList.add('active');
-                // Do NOT auto-open — the user reveals code via the top-bar Code button.
+                // Auto-open when the AI produces code (user can also toggle via the Code button)
+                this.show();
             },
             copy: function() {
                 const body = document.getElementById('code-panel-body');
