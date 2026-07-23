@@ -1379,15 +1379,16 @@
             body > main > header.h-20 { height: auto !important; padding: 10px 14px !important; flex-wrap: wrap; gap: 8px; }
             #page-title { font-size: 1.25rem !important; }
 
-            /* Contain the 900px spaceship canvas so it never forces a huge off-screen area */
-            .spaceship-container,
-            .spaceship-container.front {
-                width: 100vw !important;
-                max-width: 100vw !important;
-                height: 240px !important;
-                --spaceship-scale: 0.34 !important;
-                margin: 0 auto !important;
-            }
+            /* Fit the WHOLE spaceship on screen without touching its internal
+               900x400 canvas, its animations, or its interactivity. `zoom`
+               shrinks the ship AND its hit areas uniformly, so hover, drag and
+               the audio/delivery sequence all keep working; the ship stays
+               centered by the existing .scene flexbox. The scale value steps
+               down on smaller phones (extra breakpoints below) so it always
+               fits. NOTE: we deliberately do NOT set width/height/--spaceship-scale
+               here — those broke the ship's absolutely-positioned parts. */
+            .scene { overflow: visible !important; }
+            #the-ship { zoom: 0.6; }
 
             /* Desktop-only floating tool panels: hide on phones to stop overflow/overlap */
             #alien-position-controls,
@@ -1402,6 +1403,12 @@
             .modal-content,
             [id$="-modal"] > div:first-child { max-width: 94vw !important; max-height: 88vh !important; overflow-y: auto !important; }
         }
+
+        /* Spaceship fit — step the zoom down on smaller phones so the whole ship
+           always fits and stays centered (interactivity/animations unaffected). */
+        @media (max-width: 560px) { #the-ship { zoom: 0.46; } }
+        @media (max-width: 400px) { #the-ship { zoom: 0.40; } }
+        @media (max-width: 340px) { #the-ship { zoom: 0.33; } }
 
     </style>
 </head>
