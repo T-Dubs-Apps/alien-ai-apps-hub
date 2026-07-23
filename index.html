@@ -1378,6 +1378,10 @@
             }
             body > main > header.h-20 { height: auto !important; padding: 10px 14px !important; flex-wrap: wrap; gap: 8px; }
             #page-title { font-size: 1.25rem !important; }
+            /* Slim the top bar on phones: keep only name, Apps, Code, Settings, time */
+            #page-subtitle { display: none !important; }
+            main > header button[onclick*="detachWindow"] { display: none !important; }
+            main > header div:has(> .fa-user-astronaut) { display: none !important; }
 
             /* Fit the WHOLE spaceship on screen without touching its internal
                900x400 canvas, its animations, or its interactivity. `zoom`
@@ -1433,6 +1437,22 @@
         @media (max-width: 560px) { #the-ship { zoom: 0.46; } }
         @media (max-width: 400px) { #the-ship { zoom: 0.40; } }
         @media (max-width: 340px) { #the-ship { zoom: 0.33; } }
+
+        /* ============================================================
+           SIMPLIFIED ALIEN SCENE (redesign)
+           Scene shows only: spaceship, terminal input, output, voice.
+           Everything else lives in the top bar / Settings.
+           ============================================================ */
+        /* Remove the left sidebar / slide-out entirely — its contents (brand,
+           Customize, voice) are removed or relocated to the top bar / Settings. */
+        aside { display: none !important; }
+        main { width: 100% !important; }
+        /* Hide the hover info popup, the in-scene code tab, and the floating bottom buttons */
+        #readme-panel { display: none !important; }
+        #code-panel-tab { display: none !important; }
+        .unlock-ai-btn, .layout-toggle-btn { display: none !important; }
+        /* Keep the AI output from covering the spaceship: cap its height */
+        #chat-feed { max-height: min(30vh, calc(100vh - 280px)) !important; }
 
     </style>
 </head>
@@ -1537,15 +1557,8 @@
     <!-- Sidebar -->
     <aside class="w-20 md:w-64 flex-shrink-0 border-r border-white/10 flex flex-col justify-between bg-black/60 backdrop-blur-xl z-20">
         <div>
-            <!-- Brand -->
-            <div class="h-20 flex items-center justify-center md:justify-start md:px-6 gap-3 border-b border-white/10">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-                    <span class="font-bold text-white text-lg">P</span>
-                </div>
-                <div class="hidden md:block">
-                    <h1 class="font-bold text-lg tracking-wide text-white">PAPI <span class="text-cyan-400 font-light">5.0</span></h1>
-                </div>
-            </div>
+            <!-- Brand removed (PAPI 5.0 / P) for a clean, simple Alien look -->
+            <div class="h-4"></div>
 
             <!-- Nav -->
             <nav class="mt-8 space-y-2 px-2">
@@ -1596,6 +1609,11 @@
                     </button>
                     <!-- App Hub is now a full-screen modal — see #app-hub-modal below -->
                 </div>
+                <!-- Code button: reveals the code output panel on demand (hidden by default) -->
+                <button onclick="toggleCodePanel()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/40 border border-white/10 hover:bg-slate-700/70 transition-all" title="Show / hide code output">
+                    <i class="fa-solid fa-code text-emerald-400"></i>
+                    <span class="text-sm font-bold text-emerald-300">Code</span>
+                </button>
             </div>
             <div class="flex items-center gap-4">
                 <div class="hidden md:block text-right">
@@ -1636,6 +1654,32 @@
 
                 <!-- Body (Scrollable) -->
                 <div class="p-4 space-y-4 overflow-y-auto flex-grow">
+
+                    <!-- ===== Consolidated controls (all settings live here) ===== -->
+                    <!-- Spaceship size -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-3">
+                        <label class="block text-xs font-bold text-cyan-400 mb-2">Spaceship Size</label>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="spaceshipSizeSlider" min="0.4" max="1.2" step="0.01" value="0.72" class="flex-grow">
+                            <span id="spaceshipSizeValue" class="text-xs font-mono text-cyan-400 w-12 text-right">0.72x</span>
+                        </div>
+                    </div>
+                    <!-- Appearance / Layout / Unlock AI (each opens its own closable panel) -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-lg p-3">
+                        <label class="block text-xs font-bold text-cyan-400 mb-2">Appearance &amp; Workspace</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <button onclick="closeSettings(); openAppearancePanel();" class="w-full text-left px-3 py-2 rounded-lg bg-purple-900/20 border border-purple-500/30 text-purple-200 hover:bg-purple-900/40 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-palette"></i> Appearance &amp; Effects
+                            </button>
+                            <button onclick="closeSettings(); if(window.LayoutController) LayoutController.toggleMasterPanel();" class="w-full text-left px-3 py-2 rounded-lg bg-cyan-900/20 border border-cyan-500/30 text-cyan-200 hover:bg-cyan-900/40 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-sliders"></i> Layout Control
+                            </button>
+                            <button onclick="window.open('key-controller.html','_blank')" class="w-full text-left px-3 py-2 rounded-lg bg-emerald-900/20 border border-emerald-500/30 text-emerald-200 hover:bg-emerald-900/40 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-rocket"></i> Unlock Real AI (API Keys)
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Current Provider -->
                     <div class="bg-gray-800 border border-gray-700 rounded-lg p-3">
                         <label class="block text-xs font-bold text-cyan-400 mb-2">Active AI Provider</label>
@@ -1830,12 +1874,13 @@
 
                 <div class="scene">
                     <canvas id="lightning-canvas"></canvas>
-                    <!-- Spaceship Size Slider -->
-                    <div style="position:absolute;top:10px;right:10px;z-index:9999;background:rgba(20,20,20,0.85);padding:8px 16px 8px 10px;border-radius:14px;box-shadow:0 2px 12px #0006;display:flex;align-items:center;gap:10px;">
-                        <label for="spaceshipSizeSlider" style="font-size:13px;">Spaceship Size</label>
-                        <input type="range" id="spaceshipSizeSlider" min="0.4" max="1.2" step="0.01" value="0.72" style="width:120px;">
-                        <span id="spaceshipSizeValue" style="font-size:13px;">0.72x</span>
-                    </div>
+                    <!-- Spaceship Size Slider moved into Settings (see #settingsModal) -->
+                    <!-- Voice on/off indicator (kept in the scene) -->
+                    <button id="scene-voice-btn" onclick="toggleVoice()" title="Voice on/off"
+                        style="position:absolute;top:12px;left:12px;z-index:60;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:rgba(5,10,20,0.75);border:1px solid rgba(255,255,255,0.12);color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);">
+                        <i id="scene-voice-icon" class="fa-solid fa-volume-xmark"></i>
+                        <span id="scene-voice-text">Voice Off</span>
+                    </button>
                     <div id="the-ship" class="spaceship-container front">
                         <!-- Purple Trail for Takeoff -->
                         <div class="purple-trail"></div>
@@ -2273,10 +2318,9 @@
                 body.classList.remove('empty');
                 if (body.textContent) body.textContent += '\n\n/* ─────────────────────────────── */\n\n';
                 body.textContent += code;
-                // Light up the tab dot
+                // Light up the tab dot to signal new code is available
                 document.getElementById('code-tab-dot').classList.add('active');
-                // Auto-open the panel to show new code
-                this.show();
+                // Do NOT auto-open — the user reveals code via the top-bar Code button.
             },
             copy: function() {
                 const body = document.getElementById('code-panel-body');
@@ -4369,19 +4413,31 @@
 
         function toggleVoice() {
             state.voiceActive = !state.voiceActive;
-            const btn = document.getElementById('voice-toggle');
             const icon = document.getElementById('voice-icon');
             const txt = document.getElementById('voice-text');
+            // Scene indicator (kept visible in the scene)
+            const sIcon = document.getElementById('scene-voice-icon');
+            const sTxt = document.getElementById('scene-voice-text');
             if(state.voiceActive) {
-                icon.className = "fa-solid fa-volume-high text-cyan-400";
-                txt.innerText = "Voice On";
-                txt.className = "hidden md:block text-cyan-400";
+                if(icon) icon.className = "fa-solid fa-volume-high text-cyan-400";
+                if(txt) { txt.innerText = "Voice On"; txt.className = "hidden md:block text-cyan-400"; }
+                if(sIcon) sIcon.className = "fa-solid fa-volume-high";
+                if(sTxt) sTxt.innerText = "Voice On";
+                if(document.getElementById('scene-voice-btn')) document.getElementById('scene-voice-btn').style.color = "#22d3ee";
             } else {
-                icon.className = "fa-solid fa-volume-xmark";
-                txt.innerText = "Voice Off";
-                txt.className = "hidden md:block";
+                if(icon) icon.className = "fa-solid fa-volume-xmark";
+                if(txt) { txt.innerText = "Voice Off"; txt.className = "hidden md:block"; }
+                if(sIcon) sIcon.className = "fa-solid fa-volume-xmark";
+                if(sTxt) sTxt.innerText = "Voice Off";
+                if(document.getElementById('scene-voice-btn')) document.getElementById('scene-voice-btn').style.color = "#94a3b8";
                 window.speechSynthesis.cancel();
             }
+        }
+
+        // Code panel: hidden by default; the top-bar Code button toggles it.
+        function toggleCodePanel() {
+            const w = document.getElementById('code-panel-wrapper');
+            if (w) w.classList.toggle('open');
         }
 
         function speak(text) {
