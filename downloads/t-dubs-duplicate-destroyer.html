@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>T-Dubs Duplicate Destroyer — Download</title>
+<style>
+  :root{ --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#30363d;
+         --text:#e6edf3; --muted:#8b949e; --accent:#2ea043; --blue:#1f6feb;
+         --cyan:#00f2ea; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:
+        radial-gradient(1200px 600px at 50% -10%, #0a1a2f 0%, var(--bg) 60%);
+        color:var(--text); font-family:"Segoe UI",system-ui,Arial,sans-serif;
+        line-height:1.6; }
+  .wrap{ max-width:860px; margin:0 auto; padding:32px 20px 60px; }
+  a.back{ color:var(--muted); text-decoration:none; font-size:.9rem; }
+  a.back:hover{ color:var(--text); }
+  .hero{ display:flex; align-items:center; gap:18px; margin:22px 0 8px; }
+  .badge{ width:74px; height:74px; border-radius:18px; flex:none;
+          background:linear-gradient(135deg,#2ea043,#1f6feb);
+          display:flex; align-items:center; justify-content:center; font-size:2.4rem; }
+  h1{ margin:0; font-size:1.9rem; }
+  .ver{ color:var(--muted); font-size:.95rem; }
+  .lead{ color:var(--muted); font-size:1.05rem; margin:6px 0 26px; }
+  .cards{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:640px){ .cards{ grid-template-columns:1fr; } }
+  .card{ background:var(--panel); border:1px solid var(--border);
+         border-radius:16px; padding:22px; }
+  .card.reco{ border-color:var(--accent); box-shadow:0 0 0 1px rgba(46,160,67,.25); }
+  .card h3{ margin:0 0 4px; font-size:1.1rem; }
+  .os{ font-size:.8rem; color:var(--muted); margin-bottom:14px; }
+  .dl{ display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+       font-weight:700; border-radius:10px; padding:12px 18px; width:100%;
+       justify-content:center; }
+  .dl.primary{ background:var(--accent); color:#fff; }
+  .dl.secondary{ background:var(--panel2); color:var(--text);
+                 border:1px solid var(--border); }
+  .dl:hover{ filter:brightness(1.1); }
+  .pill{ display:inline-block; font-size:.68rem; font-weight:700; letter-spacing:.04em;
+         padding:3px 9px; border-radius:99px; margin-left:8px; vertical-align:middle; }
+  .pill.rec{ background:rgba(46,160,67,.18); color:#3fb950; }
+  .meta{ font-size:.76rem; color:var(--muted); margin-top:10px; text-align:center; }
+  section{ margin-top:34px; }
+  h2{ font-size:1.15rem; border-bottom:1px solid var(--border); padding-bottom:8px; }
+  ul{ padding-left:20px; }
+  li{ margin:7px 0; }
+  .new{ background:var(--panel); border:1px solid var(--accent); border-radius:14px;
+        padding:18px 20px; }
+  code{ background:#0b0f14; border:1px solid var(--border); border-radius:6px;
+        padding:2px 7px; font-family:Consolas,monospace; font-size:.9em; }
+  .safe{ background:rgba(46,160,67,.08); border:1px solid rgba(46,160,67,.3);
+         border-radius:12px; padding:14px 18px; font-size:.92rem; }
+  .foot{ margin-top:40px; color:var(--muted); font-size:.8rem; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="../index.html">&larr; Back to the Alien AI Hub</a>
+
+  <div class="hero">
+    <div class="badge">🗑️</div>
+    <div>
+      <h1>T-Dubs Duplicate Destroyer</h1>
+      <div class="ver">Windows desktop app &middot; v1.0 &middot; free</div>
+    </div>
+  </div>
+  <p class="lead">Find true duplicate files by content, compare them side-by-side,
+     and clear them safely — plus a new tab that finds and restores
+     <em>missing</em> and <em>misplaced</em> files.</p>
+
+  <div class="cards">
+    <div class="card" id="win-card">
+      <h3>Windows <span class="pill rec" id="win-rec" style="display:none">recommended for you</span></h3>
+      <div class="os">Self-contained .exe &middot; no Python needed &middot; ~11.7 MB</div>
+      <a class="dl primary" href="https://github.com/T-Dubs-Apps/alien-ai-apps-hub/releases/download/dd-v1.0/T-Dubs-Duplicate-Destroyer.exe">
+        &#8681; Download for Windows</a>
+      <div class="meta">Double-click to run. Windows may show a SmartScreen
+        notice for a new publisher — choose <b>More info &rarr; Run anyway</b>.</div>
+    </div>
+
+    <div class="card" id="src-card">
+      <h3>Source (any OS with Python) <span class="pill rec" id="src-rec" style="display:none">recommended for you</span></h3>
+      <div class="os">Python 3 + Tkinter &middot; run from source &middot; ~20 KB</div>
+      <a class="dl secondary" href="https://github.com/T-Dubs-Apps/alien-ai-apps-hub/releases/download/dd-v1.0/T-Dubs-Duplicate-Destroyer-source.zip">
+        &#8681; Download source .zip</a>
+      <div class="meta">Unzip, then run
+        <code>Launch T-Dubs Duplicate Destroyer.bat</code> (Windows) or
+        <code>python T-Dubs_Duplicate_Destroyer.py</code>.</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="new">
+      <h3 style="margin-top:0">✨ New: Missing File Reconciler <span class="pill rec">tab 2</span></h3>
+      <p style="margin:.4rem 0 0;color:var(--muted)">
+        Point it at a <b>Reference</b> folder (your complete copy) and a
+        <b>Target</b> folder (the incomplete one). It streams findings live and
+        color-codes them: <span style="color:#f85149">missing</span>,
+        <span style="color:#3fb950">misplaced (a copy exists elsewhere)</span>,
+        <span style="color:#e3b341">different</span>, and
+        <span style="color:#8b949e">only-in-target</span> — then copies missing
+        files into place on your say-so. It <b>only ever copies</b>: it never
+        moves or deletes, and never overwrites an existing file.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it does</h2>
+    <ul>
+      <li><b>Duplicate Destroyer tab</b> — scans any drive, folder, or repo and
+          finds <b>true</b> duplicates by content (size + SHA-256), not just by name.</li>
+      <li><b>Side-by-side A/B compare</b> with a verdict (identical / different)
+          before you remove anything.</li>
+      <li><b>Safe deletes</b> — "to Recycle Bin (recoverable)" is on by default;
+          "Keep newest / oldest" always leaves one copy.</li>
+      <li><b>Move, copy, run, open location,</b> and export results to CSV / HTML / TXT.</li>
+      <li><b>Missing File Reconciler tab</b> — find and restore missing / misplaced
+          files, copy-only and non-destructive.</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="safe">
+      <b>Your data is protected.</b> Deletes default to the Recycle Bin so they're
+      recoverable, and the Reconciler never deletes or overwrites anything.
+      A first run on a small, non-critical folder is a good way to get comfortable.
+    </div>
+  </section>
+
+  <div class="foot">Part of the Alien AI Hub &middot; built by T-Dubs Apps</div>
+</div>
+
+<script>
+  (function(){
+    var isWin = /Windows/i.test(navigator.userAgent);
+    document.getElementById(isWin ? 'win-rec' : 'src-rec').style.display = 'inline-block';
+    if (!isWin) {
+      document.getElementById('src-card').classList.add('reco');
+    } else {
+      document.getElementById('win-card').classList.add('reco');
+    }
+  })();
+</script>
+</body>
+</html>
