@@ -2235,7 +2235,7 @@
                     <div id="drop-zone-overlay">
                         <div class="drop-hint"><i class="fa-solid fa-file-code text-2xl mb-2 block"></i>Drop app file to analyze & repair</div>
                     </div>
-                    <!-- Mic button: click to start recording -->
+                    <!-- Mic button: click to talk; keeps listening until clicked again -->
                     <button onclick="actions.toggleMic()" id="mic-btn" class="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center transition-all flex-shrink-0" title="Start voice input">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
@@ -3140,46 +3140,21 @@
                 area.value = area.value.replace(/^\s*[\r\n]/gm, '');
                 return true;
             },
+            // Mic button: click to talk - Papi keeps listening until you click it again
             toggleMic: () => {
-                const btn = document.getElementById('mic-btn');
-                const stopBtn = document.getElementById('stop-mic-btn');
                 if (!state.recognition) initSpeech();
                 if (!state.recognition) {
                     addChat('ai', '🎤 Speech recognition is not supported in this browser. Try Chrome or Edge.');
                     return;
                 }
-                if (btn.classList.contains('mic-active')) {
-                    try { state.recognition.stop(); } catch(e){}
-                    btn.classList.remove('mic-active');
-                    btn.style.color = '';
-                    if (stopBtn) { stopBtn.classList.add('hidden'); stopBtn.classList.remove('flex'); }
-                } else {
-                    try {
-                        state.recognition.start();
-                        btn.classList.add('mic-active');
-                        if (stopBtn) { stopBtn.classList.remove('hidden'); stopBtn.classList.add('flex'); }
-                    } catch(e) {
-                        if (e.name === 'InvalidStateError') {
-                            // Already running — treat as stop
-                            try { state.recognition.stop(); } catch(_){}
-                        } else {
-                            addChat('ai', '🎤 Could not start microphone: ' + e.message + '. Try clicking the 🔒 icon in the address bar and allowing microphone access.');
-                        }
-                    }
-                }
+                HandsFree.setOn(!HandsFree.on);
             },
-            stopMic: () => {
-                const btn = document.getElementById('mic-btn');
-                const stopBtn = document.getElementById('stop-mic-btn');
-                if(state.recognition){ try { state.recognition.stop(); } catch(e){} }
-                btn.classList.remove('mic-active');
-                btn.style.color = "#94a3b8";
-                if(stopBtn){ stopBtn.classList.add('hidden'); stopBtn.classList.remove('flex'); }
-            },
+            stopMic: () => { HandsFree.setOn(false); },
             sendCmd: (cmdText) => {
                 const input = document.getElementById('cmd-input');
                 const txt = cmdText || input.value.trim();
                 if(!txt) return;
+                if (typeof HandsFree !== 'undefined' && HandsFree && HandsFree.paused.typing) { HandsFree.paused.typing = false; setTimeout(() => HandsFree.refresh(), 0); }
                 
                 // 1. Rock the ship based on input length
                 const ship = document.getElementById('the-ship');
@@ -4433,6 +4408,7 @@
                 if(sTxt) sTxt.innerText = "Voice Off";
                 if(document.getElementById('scene-voice-btn')) document.getElementById('scene-voice-btn').style.color = "#94a3b8";
                 window.speechSynthesis.cancel();
+                if (typeof HandsFree !== 'undefined' && HandsFree) { HandsFree.paused.speaking = false; HandsFree.refresh(); }
             }
         }
 
@@ -4445,6 +4421,11 @@
         function speak(text) {
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
+            if (typeof HandsFree !== 'undefined' && HandsFree) {   // stop listening while the Alien talks
+                HandsFree.paused.speaking = true;
+                HandsFree.refresh();
+                u.onend = u.onerror = () => { HandsFree.paused.speaking = false; setTimeout(() => HandsFree.refresh(), 250); };
+            }
             const voices = window.speechSynthesis.getVoices();
             const v = voices.find(v => v.name.includes("Google") || v.name.includes("Samantha"));
             if(v) u.voice = v;
@@ -4453,61 +4434,133 @@
             window.speechSynthesis.speak(u);
         }
 
+        // ===== Voice input: hands-free conversation =====
+        // Off when the page opens. Click the mic button and the Alien keeps listening
+        // for the whole conversation: just talk, and what you said is sent when you
+        // pause. It stops listening while it talks back (so it never hears itself),
+        // then listens again - until you click the mic button off. The keyboard always
+        // works: listening pauses while you type and comes back after Enter.
+        var HandsFree = {   // (var: speak / sendCmd may run before this line - they check it exists)
+            on: false,               // off until you click the mic button
+            running: false,
+            ending: 0,               // when listening was told to stop (it takes a moment)
+            blocked: false,          // no permission / no microphone
+            paused: { speaking: false, typing: false },
+            retryMs: 300,
+            told: {},                // problems already explained once
+            wanted() { return this.on && !this.blocked && !this.paused.speaking && !this.paused.typing; },
+            start() {
+                if (!state.recognition) initSpeech();
+                if (this.ending && Date.now() - this.ending < 3000) { this.show(); return; }   // restarts once it has stopped
+                this.ending = 0;
+                if (state.recognition && !this.running && this.wanted()) {
+                    try { state.recognition.start(); this.running = true; } catch (e) { /* already listening */ }
+                }
+                this.show();
+            },
+            stop() {
+                if (state.recognition && this.running) { this.ending = Date.now(); try { state.recognition.abort(); } catch (e) {} }
+                this.running = false;
+                this.show();
+            },
+            refresh() { this.wanted() ? this.start() : this.stop(); },
+            setOn(on) {
+                this.on = on;
+                this.blocked = false;
+                this.told = {};
+                if (!on) { const i = document.getElementById('cmd-input'); if (i && !this.paused.typing) i.value = ''; }
+                this.refresh();
+            },
+            tell(key, text) { if (!this.told[key]) { this.told[key] = true; addChat('ai', text); } },
+            show() {
+                const btn = document.getElementById('mic-btn');
+                const input = document.getElementById('cmd-input');
+                const stopBtn = document.getElementById('stop-mic-btn');
+                if (stopBtn) { stopBtn.classList.add('hidden'); stopBtn.classList.remove('flex'); }
+                if (!btn || !input) return;
+                const live = this.on && !this.blocked;
+                btn.classList.toggle('mic-active', live && this.running);
+                btn.style.color = live ? (this.running ? '#22d3ee' : '#0e7490') : '';
+                btn.title = live ? 'Listening - just talk. Click to stop listening'
+                                 : 'Click to talk (it keeps listening until you click again)';
+                input.placeholder = !live ? 'Ask the Alien anything, or type a command...'
+                                  : this.paused.speaking ? 'The Alien is talking... (listening again in a moment)'
+                                  : this.paused.typing ? 'Typing - press Enter to send (then listening resumes)'
+                                  : 'Listening... just talk, or type here';
+            }
+        };
+
         function initSpeech() {
             // Support both standard and webkit-prefixed Speech API
-            const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechAPI) return; // No speech support in this browser
-
-            state.recognition = new SpeechAPI();
-            state.recognition.continuous = false;
-            state.recognition.interimResults = true;
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) return; // No speech support in this browser
+            state.recognition = new SR();
+            state.recognition.continuous = true;      // keep listening between sentences
+            state.recognition.interimResults = true;  // show the words as you speak
             state.recognition.lang = navigator.language || 'en-US';
 
             state.recognition.onresult = (e) => {
+                if (!HandsFree.on || HandsFree.paused.typing || HandsFree.paused.speaking) return;
+                HandsFree.retryMs = 300;
                 const input = document.getElementById('cmd-input');
-                const transcript = e.results[0][0].transcript;
-                input.value = transcript;
-                if (e.results[0].isFinal) {
-                    setTimeout(() => {
-                        actions.sendCmd();
-                        actions.toggleMic();
-                    }, 100);
+                let heard = '', finished = '';
+                for (let i = e.resultIndex; i < e.results.length; i++) {
+                    const r = e.results[i];
+                    if (r.isFinal) finished += r[0].transcript; else heard += r[0].transcript;
+                }
+                finished = finished.trim();
+                if (finished) {
+                    input.value = '';
+                    actions.sendCmd(finished);   // you paused: send what you said
+                } else {
+                    input.value = heard.trim();  // words appear as you speak
                 }
             };
 
             state.recognition.onend = () => {
-                document.getElementById('mic-btn').classList.remove('mic-active');
-                const sb = document.getElementById('stop-mic-btn');
-                if (sb) { sb.classList.add('hidden'); sb.classList.remove('flex'); }
+                HandsFree.running = false;
+                HandsFree.ending = 0;
+                HandsFree.show();
+                if (HandsFree.wanted())   // the browser stops after a silence: start again
+                    setTimeout(() => HandsFree.start(), HandsFree.retryMs);
             };
 
             state.recognition.onerror = (e) => {
+                if (e.error === 'no-speech' || e.error === 'aborted') return;   // normal - keeps listening
                 console.warn('Speech recognition error:', e.error);
-                document.getElementById('mic-btn').classList.remove('mic-active');
-                const sb = document.getElementById('stop-mic-btn');
-                if (sb) { sb.classList.add('hidden'); sb.classList.remove('flex'); }
-
                 if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                    addChat('ai', '🎤 Microphone access was denied. Click the 🔒 icon in your browser\'s address bar, allow the microphone, then refresh the page.');
+                    HandsFree.blocked = true;
+                    HandsFree.tell('denied', '🎤 Microphone access was denied. Click the 🔒 icon in the address bar, allow the microphone, then click the mic button again. You can still type.');
                 } else if (e.error === 'audio-capture') {
-                    addChat('ai', '🎤 No microphone detected. Please connect a microphone and try again.');
+                    HandsFree.blocked = true;
+                    HandsFree.tell('nomic', '🎤 No microphone found. Plug one in, then click the mic button. You can still type.');
                 } else if (e.error === 'network') {
-                    // Chrome's Web Speech API requires HTTPS or localhost — it fails on file:// URLs
-                    // even when the device IS connected to the internet.
-                    const isFileProtocol = location.protocol === 'file:';
-                    if (isFileProtocol) {
-                        addChat('ai', '🎤 Voice input needs a secure connection to work in Chrome.\n\n' +
-                            'You\'re opening the app as a local file, which Chrome blocks for speech recognition.\n\n' +
-                            '✅ Try Microsoft Edge — it uses a different speech engine that works with local files.\n' +
-                            '✅ Or serve the app through a local web server (e.g. VS Code Live Server, Python http.server).');
+                    if (location.protocol === 'file:') {
+                        HandsFree.blocked = true;
+                        HandsFree.tell('file', '🎤 Voice input needs the page to be opened from a web address, not as a file. Open the Hub from its link (or use Microsoft Edge). You can still type.');
                     } else {
-                        addChat('ai', '🌐 Speech recognition encountered a network error. Make sure you\'re connected to the internet, then try again.');
+                        HandsFree.retryMs = 3000;
+                        HandsFree.tell('network', '🌐 Voice needs an internet connection - I will keep trying. You can still type.');
                     }
-                } else {
-                    addChat('ai', `🎤 Voice input error (${e.error}). Please try again.`);
                 }
+                HandsFree.show();
             };
         }
+
+        // Keyboard: typing pauses listening; Enter (or an empty box) brings it back
+        document.getElementById('cmd-input').addEventListener('input', (e) => {
+            HandsFree.paused.typing = e.target.value.trim().length > 0;
+            HandsFree.refresh();
+        });
+
+        // Watchdog: keep listening going (and never stay "talking" after the Alien has finished)
+        setInterval(() => {
+            if (HandsFree.paused.speaking && !window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+                HandsFree.paused.speaking = false;
+            }
+            if (HandsFree.wanted() && !HandsFree.running) HandsFree.start();
+            HandsFree.show();
+        }, 1500);
 
         // Setup Carousel Interaction
         // Removed carousel hover listeners - apps now in dropdown menu
@@ -4577,35 +4630,9 @@
             if (e.key === 'Enter') { e.preventDefault(); actions.sendCmd(); }
         });
 
-        // Pre-warm microphone permission once on page load.
-        // This means the browser asks once (when the page opens) instead of
-        // every time the mic button is clicked. After the user clicks Allow,
-        // the recognizer is ready to go immediately.
-        (function warmMic() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-            navigator.permissions && navigator.permissions.query({ name: 'microphone' })
-                .then(result => {
-                    if (result.state === 'granted') {
-                        // Already allowed — just init the recognizer silently
-                        initSpeech();
-                    } else if (result.state === 'prompt') {
-                        // Will ask — request access now so the popup appears once on load
-                        navigator.mediaDevices.getUserMedia({ audio: true })
-                            .then(stream => {
-                                stream.getTracks().forEach(t => t.stop()); // Don't hold the stream open
-                                initSpeech();
-                            })
-                            .catch(() => {}); // User denied — mic button will show helpful message
-                    }
-                    // 'denied' — don't request; mic button error handler will explain
-                })
-                .catch(() => {
-                    // permissions API not supported — try getUserMedia directly
-                    navigator.mediaDevices.getUserMedia({ audio: true })
-                        .then(stream => { stream.getTracks().forEach(t => t.stop()); initSpeech(); })
-                        .catch(() => {});
-                });
-        })();
+        // Ready to listen, but the microphone stays off until you click the mic button
+        initSpeech();
+        HandsFree.show();
 
         // App Hub is a full-screen modal — no click-outside-close needed for the old dropdown
         
